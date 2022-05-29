@@ -42,17 +42,104 @@
     We follow the material and contents taught in the lecture -- considering best practices, common attacks and security measures --
     for the instantiation of our P2P protocol.
 
-    \section{Tooling and Infrastructure}\label{sec:tooling-and-infrastructure} % TODO maybe rework wording of the headline
-    % chosen programming language (+os?)
-    % build systen and infrastructure: gradle
-    % CI/CD => tests, linting etc
-    % available libraries (netty for asny net I/O, bouncy castle crypto?, init4j,JUint 5)
+    \section{Tooling and Infrastructure}\label{sec:tooling-and-infrastructure}
+    For our implementation we chose Java 17 LTS\footnote{https://openjdk.java.net/projects/jdk/17/} as the programming language.
+    Lower level languages such as C/C++ may have better performance, but we identify performance to not be that hard of a requirement for this project
+    as the focus is on the network-layer and not really consisting of many computational intensive tasks.
+    Therefore, we decided to focus on readability, type safety and faster development iterations.
+    After all, while not being a compiled language, Java still delivers incredible performance.
+    While we don't expect any major platform incompaitibilities, we primarmly develop for UNIX-based systems with macOS 12 and Ubuntu 22.04 LTS being the focus.
 
-    % licenscing % TODO in which section to put this?
+    For our build system we use Gradle.
+    It is a modern and well estbalished build system in the Java community and itegrates with Maven central for fast and easy dependency managment.
+    We aim to use the provided GitLab instance for our development workflow (Issues, PRs and Git workflow).
+    That includes relying on the GitLab CI infrastructure for automatic build and testing pipelines.
+    % TODO linter?
+
+    We intend to rely on the following libraries:
+    \begin{itemize}
+        \setlength\itemsep{0em}
+        \item \textbf{Netty 5}\footnote{https://netty.io} is used an asynchronous and event-driven networking I/O framework.
+        We rely on it as the core for both the API protocol and the P2P protocol implementations.
+        \item \textbf{Bouncy Castle}\footnote{https://bouncycastle.org} will be used to perform any crypto operations that are part of the developed P2P protocol.
+        \item \textbf{ini4j}\footnote{http://ini4j.sourceforge.net/index.html} is used for parsing the INI-style configuration files.
+        \item \textbf{JUnit 5}\footnote{https://junit.org/junit5} is used as the testing library.
+        It is widely used in the Java development community and integrates natively with the Gradle build system.
+    \end{itemize}
+
+    This project is licensed under the MIT license.
+    The license text is available in the LICENSE file at the root of the repository.
 
     \section{Previous Experiences}\label{sec:previous-experiences}
 
-    % programming experiences of team members `which is relevatn to this project' % TODO what means ``relevant'' here?
+    We both have a strong background with the Java programming language.
+    Both of us were involed in bigger software projects, building experiences with common project management
+    and development workflow tools and pratices.
+    We provide some references to past work in the following.
 
-    % TODO timeline? + work distribution
+    I, Chung Hwan Han, have done a project about arp spoofing\footnote{https://github.com/hanchchch/arp-spoof}, 
+    which is relevant with this project in terms of the network security.
+    Also, I gained experiences in networks and access control while working on the project about simulating CSMA\footnote{https://github.com/hanchchch/csma-ca}.
+    Please refer my GitHub profile for more information\footnote{https://github.com/hanchchch}.
+    
+    I, Andreas Bauer, want to highlight my participation in the open-source project Homebridge\footnote{https://github.com/homebridge/homebridge}
+    as one of the primary maintains.
+    Furhter, I gained extensive experiences practicing agile development workflows as part of the Apodini\footnote{https://github.com/Apodini/Apodini} research project.
+    General references and experiences can be taken from by GitHub profile\footnote{https://github.com/Supereg}.
+
+    \section{Planned Work Distribution}\label{sec:planned-work-distribution}
+
+    We identify the following fundamental milestones for our project work:
+
+    \begin{itemize}
+        \setlength\itemsep{0em}
+        \item \textbf{Project Setup}: The initial step in the project is the project setup itself.
+        Part of it is the setup of the Java project and the Gradle build environment.
+        Further, it deals with the configuration of the GitLab CI/CD pipeline with ensures that new code is
+        compliant with code style and unit tests pass as expected.
+        Lastly, we intend to use GitLab features like \textit{Push rules} to enforce our PR-based Git workflow.
+        \item \textbf{API}: The implementation of the inter-module API will be the first step in the implementation work.
+        It enables us to build core networking layer which we can later reuse for the P2P protocol implementation.
+        The API-layer itself it properly define within the project specification and therefore a good candiate for the first implementation step.
+        Predefined python scripts to interact with the API server are provided from the start and serve as an initial test vector.
+        \item \textbf{P2P Protocol}: The implementation of the core logics of the project.
+        \begin{itemize}
+            \setlength\itemsep{0em}
+            \item \textbf{Session Management}: Establishing and maintaining connections between peers.
+            It should provide security measures such as authentication and encryption.
+            \item \textbf{One-shot Messages}: Messages that are sent once and then discarded.
+            Since some messages of Gossip do not expect any response, we can implement them as one-shot messages.
+            \item \textbf{Notification System}: Implementation of notification protocol that represented on the specification.
+        \end{itemize}
+        \item \textbf{Tests}: Writing test cases to guatantee the functionalities.
+        Each point would have its own test cases. We will use JUnit 5 for this purpose.
+        Further, we will use the provided GitLab CI/CD pipeline to automatically run the tests and ensure that the tests pass as expected.
+        \item \textbf{Documentation \& Reports}: The final step in the project is the documentation and writing reports.
+    \end{itemize}
+
+
+    We aim for a fair and eqaul workload distribution.
+    We will follow a agile development workflow, staying in continuous contact, realigning on project goals, milestones and
+    current workload distribution.
+    Nonetheless, we want to sketch a rough workload distribution in the context of the above outline milestones.
+    For simplicity reasons, the initial \textit{Project Setup} will be done by a single person.
+    Implementation of the \textit{API} might be split into implementation of the networking-layer and the implementation of the message formats.
+    Work on the \textit{P2P Protocol} is split according to the sub-milestones identified above.
+    We will allow ourselves to assign workload distbution for this milestones dynamically and by need.
+    While \textit{Tests} are mentioned as a explicit milestone, we expect that those are implemented with every incremental development step.
+    Lastly, work invested into wiriting the midterm and final report is split equally.
+
 \end{document}
+
+% Checklist
+% [x] 1. Team name, names of team members and module, which implementation you have chosen to work on.
+% [x] 2. Chosen programming language and operating system and reasons for choosing them.
+% [x] 3. Build system to use in the project
+% [x] 4. Intended measures to guarantee quality of your software 
+%   • How do you write testcases
+%   • Quality control (e.g. Valgrind, cppcheck, ...)
+%   • ...
+% [x] 5. Available libraries to assist you in your project
+% [x] 6. License you intend to assign your project’s software and reasons for doing so
+% [x] 7. Previous programming experience of your team members, which is relevant to this project
+% [x] 8. Planned workload distribution
