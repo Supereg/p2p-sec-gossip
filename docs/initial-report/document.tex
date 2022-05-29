@@ -31,30 +31,30 @@
 
     \section{Objective}\label{sec:objective}
 
-    We, Andreas Bauer and Chung Hwan Han, form the team \textit{Gossip-10} in the Peer-to-Peer Systems and Security course.
-    Within the project we implement the Gossip module of the \textit{VoidPhone} Voice over IP system.
+    We, Andreas Bauer and Chung Hwan Han form the team \textit{Gossip-10} in the Peer-to-Peer Systems and Security course.
+    Within the project, we implement the Gossip module of the \textit{VoidPhone} Voice over IP system.
     The system provides anonymity and understandability to voice communication through a peer-to-peer architecture.
     The Gossip module is used to spread information like availability information among communicating peers.
     Other modules from other teams might rely on the Gossip module to spread information required for their operations
     through the network.
     For this purpose, the project specification defines a socket-layer API for inter-module communication.
     The protocol spoken between Gossip instances is the core product of this project work.
-    We follow the material and contents taught in the lecture -- considering best practices, common attacks and security measures --
+    We follow the material and contents taught in the lecture -- considering best practices, common attacks, and security measures --
     for the instantiation of our P2P protocol.
 
     \section{Tooling and Infrastructure}\label{sec:tooling-and-infrastructure}
-    For our implementation we chose Java 17 LTS\footnote{https://openjdk.java.net/projects/jdk/17/} as the programming language.
-    Lower level languages such as C/C++ may have better performance, but we identify performance to not be that hard of a requirement for this project
-    as the focus is on the network-layer and not really consisting of many computational intensive tasks.
-    Therefore, we decided to focus on readability, type safety and faster development iterations.
+    For our implementation, we chose Java 17 LTS\footnote{https://openjdk.java.net/projects/jdk/17/} as the programming language.
+    We acknowledge that lower-level languages such as C/C++ may have better performance.
+    Still, we identify performance to not be that hard of a requirement for this project
+    as the focus is on the network layer and does not consist of many computational intensive tasks.
+    Therefore, we decided to focus on readability, type safety, and faster development iterations.
     After all, while not being a compiled language, Java still delivers incredible performance.
-    While we don't expect any major platform incompaitibilities, we primarmly develop for UNIX-based systems with macOS 12 and Ubuntu 22.04 LTS being the focus.
+    While we don't expect any major platform incompatibilities, we primarily develop for UNIX-based systems, with macOS 12 and Ubuntu 22.04 LTS being the focus.
 
-    For our build system we use Gradle.
-    It is a modern and well estbalished build system in the Java community and itegrates with Maven central for fast and easy dependency managment.
-    We aim to use the provided GitLab instance for our development workflow (Issues, PRs and Git workflow).
-    That includes relying on the GitLab CI infrastructure for automatic build and testing pipelines.
-    % TODO linter?
+    For our build system, we use Gradle.
+    It is a modern and well-established build system in the Java community and integrates with Maven Central for fast and easy dependency management.
+    We aim to use the provided GitLab instance for our development workflow (Issues, PRs, and Git workflow).
+    That includes relying on the GitLab CI infrastructure for automatic building, linting, and testing pipelines.
 
     We intend to rely on the following libraries:
     \begin{itemize}
@@ -68,24 +68,24 @@
     \end{itemize}
 
     This project is licensed under the MIT license.
-    The license text is available in the LICENSE file at the root of the repository.
+    The license text is available in the \textit{LICENSE} file at the repository's root.
 
     \section{Previous Experiences}\label{sec:previous-experiences}
 
     We both have a strong background with the Java programming language.
-    Both of us were involed in bigger software projects, building experiences with common project management
-    and development workflow tools and pratices.
+    Both of us were involved in bigger software projects, building experiences with common project management
+    and development workflow tools and practices.
     We provide some references to past work in the following.
 
     I, Chung Hwan Han, have done a project about arp spoofing\footnote{https://github.com/hanchchch/arp-spoof}, 
-    which is relevant with this project in terms of the network security.
+    which is relevant to this project in terms of network security.
     Also, I gained experiences in networks and access control while working on the project about simulating CSMA\footnote{https://github.com/hanchchch/csma-ca}.
-    Please refer my GitHub profile for more information\footnote{https://github.com/hanchchch}.
+    Please refer to my GitHub profile for more information\footnote{https://github.com/hanchchch}.
     
     I, Andreas Bauer, want to highlight my participation in the open-source project Homebridge\footnote{https://github.com/homebridge/homebridge}
-    as one of the primary maintains.
-    Furhter, I gained extensive experiences practicing agile development workflows as part of the Apodini\footnote{https://github.com/Apodini/Apodini} research project.
-    General references and experiences can be taken from by GitHub profile\footnote{https://github.com/Supereg}.
+    as one of the primary maintainers.
+    Further, I gained extensive experiences practicing agile development workflows as part of the Apodini\footnote{https://github.com/Apodini/Apodini} research project.
+    General references and experiences can be taken from my GitHub profile\footnote{https://github.com/Supereg}.
 
     \section{Planned Work Distribution}\label{sec:planned-work-distribution}
 
@@ -95,39 +95,41 @@
         \setlength\itemsep{0em}
         \item \textbf{Project Setup}: The initial step in the project is the project setup itself.
         Part of it is the setup of the Java project and the Gradle build environment.
-        Further, it deals with the configuration of the GitLab CI/CD pipeline with ensures that new code is
+        Further, it deals with the GitLab CI/CD pipeline configuration, ensuring that new code is
         compliant with code style and unit tests pass as expected.
         Lastly, we intend to use GitLab features like \textit{Push rules} to enforce our PR-based Git workflow.
         \item \textbf{API}: The implementation of the inter-module API will be the first step in the implementation work.
-        It enables us to build core networking layer which we can later reuse for the P2P protocol implementation.
-        The API-layer itself it properly define within the project specification and therefore a good candiate for the first implementation step.
+        It enables us to build the core networking layer, which we can later reuse for the P2P protocol implementation.
+        The API layer itself is precisely defined within the project specification and, therefore, a good candidate for the first implementation step.
         Predefined python scripts to interact with the API server are provided from the start and serve as an initial test vector.
-        \item \textbf{P2P Protocol}: The implementation of the core logics of the project.
+        \item \textbf{P2P Protocol}: The implementation of the core logic of the project.
+        We identify the following three sub-milestones:
         \begin{itemize}
             \setlength\itemsep{0em}
             \item \textbf{Session Management}: Establishing and maintaining connections between peers.
             It should provide security measures such as authentication and encryption.
-            \item \textbf{One-shot Messages}: Messages that are sent once and then discarded.
-            Since some messages of Gossip do not expect any response, we can implement them as one-shot messages.
-            \item \textbf{Notification System}: Implementation of notification protocol that represented on the specification.
+            \item \textbf{Announcing Messages}: The module can be requested to announce messages through the API\@.
+            Messages are sent according to our protocol design.
+            \item \textbf{Notification System}: Upper layers using this module can subscribe to be notified for particular incoming messages types.
+            This subsystem tracks registered clients and forwards incoming messages accordingly.
         \end{itemize}
-        \item \textbf{Tests}: Writing test cases to guatantee the functionalities.
-        Each point would have its own test cases. We will use JUnit 5 for this purpose.
+        \item \textbf{Tests}: We write test cases to guarantee system functionalities.
+        We will use JUnit 5 for this purpose.
         Further, we will use the provided GitLab CI/CD pipeline to automatically run the tests and ensure that the tests pass as expected.
-        \item \textbf{Documentation \& Reports}: The final step in the project is the documentation and writing reports.
+        \item \textbf{Documentation \& Reports}: The final step in the project is writing the documentation and reports.
     \end{itemize}
 
 
-    We aim for a fair and eqaul workload distribution.
-    We will follow a agile development workflow, staying in continuous contact, realigning on project goals, milestones and
+    We aim for a fair and equal workload distribution.
+    We will follow an agile development workflow, staying in continuous contact, realigning on project goals, milestones, and
     current workload distribution.
-    Nonetheless, we want to sketch a rough workload distribution in the context of the above outline milestones.
+    Nonetheless, we want to sketch a rough workload distribution in the context of the above-outlined milestones.
     For simplicity reasons, the initial \textit{Project Setup} will be done by a single person.
-    Implementation of the \textit{API} might be split into implementation of the networking-layer and the implementation of the message formats.
-    Work on the \textit{P2P Protocol} is split according to the sub-milestones identified above.
-    We will allow ourselves to assign workload distbution for this milestones dynamically and by need.
-    While \textit{Tests} are mentioned as a explicit milestone, we expect that those are implemented with every incremental development step.
-    Lastly, work invested into wiriting the midterm and final report is split equally.
+    Implementation of the \textit{API} might be split into implementing the networking layer and the message formats.
+    Work on the \textit{P2P Protocol} is divided according to the sub-milestones identified above.
+    We will allow ourselves to assign workload distribution for these milestones dynamically and by need.
+    While \textit{Tests} are mentioned as an explicit milestone, we expect that those are implemented implicitly with every incremental development step.
+    Lastly, work invested in writing the midterm and final report is split equally.
 
 \end{document}
 
