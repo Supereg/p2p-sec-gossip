@@ -30,17 +30,29 @@
     \maketitle
 
     \section{Objective}\label{sec:objective}
-    % chosen module/project, team name, ... and some basics?
 
-    \section{Tools and Infrastructure}\label{sec:tools-and-infrastructure} % TODO maybe rework wording of the headline
+    We, Andreas Bauer and Chung Hwan Han, form the team \textit{Gossip-10} in the Peer-to-Peer Systems and Security course.
+    Within the project we implement the Gossip module of the \textit{VoidPhone} Voice over IP system.
+    The system provides anonymity and understandability to voice communication through a peer-to-peer architecture.
+    The Gossip module is used to spread information like availability information among communicating peers.
+    Other modules from other teams might rely on the Gossip module to spread information required for their operations
+    through the network.
+    For this purpose, the project specification defines a socket-layer API for inter-module communication.
+    The protocol spoken between Gossip instances is the core product of this project work.
+    We follow the material and contents taught in the lecture -- considering best practices, common attacks and security measures --
+    for the instantiation of our P2P protocol.
+
+    \section{Tooling and Infrastructure}\label{sec:tooling-and-infrastructure} % TODO maybe rework wording of the headline
     % chosen programming language (+os?)
-    % build systen and infrastructure
+    % build systen and infrastructure: gradle
     % CI/CD => tests, linting etc
-    % available libraries (Net I/O, crypto, ...?)
+    % available libraries (netty for asny net I/O, bouncy castle crypto?, init4j,JUint 5)
 
     % licenscing % TODO in which section to put this?
 
     \section{Previous Experiences}\label{sec:previous-experiences}
 
     % programming experiences of team members `which is relevatn to this project' % TODO what means ``relevant'' here?
+
+    % TODO timeline? + work distribution
 \end{document}
