@@ -17,6 +17,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.jetbrains:annotations:20.1.0")
     // Use JUnit Jupiter for testing.
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
 
