@@ -18,7 +18,7 @@ public class GossipAPILayer {
     private final TCPServer server;
 
     public GossipAPILayer(ConfigurationFile configuration, EventLoopGroup eventLoopGroup) {
-        server = PROTOCOL.makeServer(configuration.api_address, 0, eventLoopGroup, GossipAPIConnectionHandler::new);
+        server = PROTOCOL.makeServer(configuration.api_address.split(":")[0], Integer.parseInt(configuration.api_address.split(":")[1]), eventLoopGroup, GossipAPIConnectionHandler::new);
     }
 
     public void run() {
