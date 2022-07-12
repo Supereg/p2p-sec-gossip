@@ -1,0 +1,41 @@
+\section{Requirements}\label{sec:requirements}
+
+Within the work spent on the project, we derived several requirements set against the system.
+This section provides an overview of what the Gossip is supposed to do and what we identify as essential
+for our ongoing design decisions.
+
+As roughly outlined above, Gossip is responsible for spreading information in the peer-to-peer network.
+To do so, Gossip establishes connections with several other members of the network.
+Each peer maintains a public-private key pair\footnote{A 4096-bit long RSA keypair.} -- referred to
+as \textit{hostkey} -- which is used for peer identification and trust verification.
+By specification, we assume that the public keys of the hostkeys are exchanged out-of-band
+beforehand between all members.
+
+Our developed protocol can currently be divided into two phases: \textit{handshake} and \textit{knowledge-spreading}.
+For the handshake, we identify the following requirements:
+\begin{itemize}
+    \setlength\itemsep{0em}
+    \item Verify the identity and authenticity of the remote peer.
+    \item Establish a secure channel, providing confidentiality and integrity to the communication
+    and preventing typical attacks like message replays.
+    \item Ensure that as much meta-information as possible is protected (e.g., outside attackers can't easily
+    trace who is communicating/connecting with whom except through information leaked by lower layers).
+\end{itemize}
+
+While knowledge-spreading is specified to be best-effort and doesn't need to make any guarantees,
+we nonetheless want to deliver the best possible performance and protection against typical attacks.
+Some attacks are already out-ruled by design by the specification (e.g., information is always validated
+by the upper layer before continuing to spread information;
+or knowledge is spread to the whole network and not to single identities).
+Still, information may be lost if an Eclipse attack is staged and participating attacker peers drop all messages
+of a particular data type.
+Therefore, measures must be taken so that attackers don't have significant enough control over who is
+initiating a connection to whom.
+For routing itself, we must consider that we are maintaining an unstructured network and therefore need to
+take measures that routing packets aren’t traveling forever in cycles.
+
+Other modules interact with Gossip through the specification-defined TCP socket interface.
+API consumers will register data types they are interested in to be notified about.
+They may announce data into the network for those registered data types.
+For incoming data, Gossip delivers it to all registered API clients.
+Once each of those validated the data, information will be spread further into the network.

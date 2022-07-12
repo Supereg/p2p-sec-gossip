@@ -1,0 +1,74 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{multirow}
+\usepackage{color}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{bytefield}
+\usepackage{multirow}
+\usepackage[left=25mm , right=25mm, top=25mm, bottom=25mm]{geometry}
+\usetikzlibrary{positioning, arrows.meta}
+
+% Taken From https://tex.stackexchange.com/a/428393
+\newcommand*\justify{%
+    \fontdimen2\font=0.4em% interword space
+    \fontdimen3\font=0.2em% interword stretch
+    \fontdimen4\font=0.1em% interword shrink
+    \fontdimen7\font=0.1em% extra space
+    \hyphenchar\font=`\-% allowing hyphenation
+}
+\newcommand{\ttt}[1]{%
+    \begingroup
+    \ttfamily
+    \begingroup\lccode`~=`/\lowercase{\endgroup\def~}{/\discretionary{}{}{}}%
+    \begingroup\lccode`~=`[\lowercase{\endgroup\def~}{[\discretionary{}{}{}}%
+    \begingroup\lccode`~=`.\lowercase{\endgroup\def~}{.\discretionary{}{}{}}%
+    \catcode`/=\active\catcode`[=\active\catcode`.=\active
+    \justify\scantokens{#1\noexpand}%
+    \endgroup
+}
+
+\title{\textbf{Midterm Report}}
+\author{
+    Andreas Bauer\\
+    andi.bauer@tum.de
+  \and
+    Chung Hwan Han\\
+    hanc@in.tum.de
+}
+\date{July 2021}
+
+\begin{document}
+
+    \maketitle
+
+    \input{sections/1_Objective.tex}
+    \input{sections/2_Requirements.tex}
+    \input{sections/3_0_Architecture.tex}
+    \input{sections/4_Future_Work.tex}
+    \input{sections/5_Workload_Distribution.tex}
+    \input{sections/6_Changes.tex}
+
+\end{document}
+
+% Checklist
+% [ ] 1. Changes to your assumptions in the initial report
+% [ ] 2. Architecture of your module
+%   • Logical structure (classes, ...)
+%   • Process architecture (threading, multi-process, ...)
+%   • Networking (AsyncIO, goroutines, ...)
+%   • Security measures (encryption/auth, ...)
+% [ ] 3. The peer-to-peer protocol(s) that is present in the implementation
+%   • Message formats (as given in this document)
+%   • Reasoning why the messages are needed
+%   • Exception handling (Churn, connection breaks, corrupted data, ...)
+% [ ] 4. Future Work: Features you wanted to include in the implementation but couldn’t finish so far
+% [ ] 5. Workload Distribution — Who did what
+% [ ] 6. Effort spent for the project (please specify individual effort)

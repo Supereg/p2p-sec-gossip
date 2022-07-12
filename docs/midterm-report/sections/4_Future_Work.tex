@@ -1,0 +1,63 @@
+\section{Future Work}\label{sec:future-work}
+
+This section details future work we see necessary to view the project as completed.
+
+\subsection{Gossip Protocol}\label{subsec:gossip-protocol-future-work}
+
+The Gossip protocol isn't yet fully implemented and still in the state of a
+draft pull request\footnote{https://gitlab.lrz.de/netintum/teaching/p2psec\_projects\_2022/Gossip-10/-/merge\_requests/8}.
+There are currently essentials missing, like full test coverage and source code documentation.
+
+Further, the knowledge spreading process is only nearly completed.
+Specifically, concering packet routing, we have to think about how to prevent attacks against the
+\textit{message id} field of the \ttt{KNOWLEDGE SPREADING} packet (see \autoref{fig:gossip-spread-knowledge}).
+We rely on it to identify cyclic packets.
+We may either impose some cool-downs or impose another method of detecting cycles.
+
+Lastly, as specified, hostkeys are assumed to be exchanged out-of-band.
+Nonetheless, we are interested in researching solutions for session onboarding and spreading
+information about known peers into the network.
+It would require us to think about how to counter Eclipse attacks effectively.
+Though, it is noted that we see this as an optional milestone.
+% e.g. connect to peers unpredicably (=> hostkeys exchaned out of band)
+
+\subsection{Project Related Improvements}\label{subsec:development-purposes-improvements}
+
+More test cases have to be added to guarantee system functionalities. 
+Currently, the code coverage is 63\% for commands and 42\% for branches (see \autoref{fig:code-coverage}).
+This figure means that improvement on the test case is needed.
+In particular, for the most recently written P2P package follow-up work is required.
+In addition to improving code coverage, end-to-end tests should also be written on whether the module meets all the requirements.
+
+% TODO update stats with the lates changes plzz
+\begin{figure}[htbp]
+    \centering
+    \begin{tabular}{ |p{5cm}||p{2cm}|p{2cm}| }
+        \hline
+        \multicolumn{3}{|c|}{Code Coverage} \\
+        \hline
+        Element & Instructions & Branches \\
+        \hline
+        de.tum.gossip & 56\% & 50\% \\
+        de.tum.gossip.api & 14\% & 0\% \\
+        de.tum.gossip.api.packets & 87\% & 50\% \\
+        de.tum.gossip.crypto & 81\% & 64\% \\
+        de.tum.gossip.net & 81\% & 55\% \\
+        de.tum.gossip.net.packets & 50\% & n/a \\
+        de.tum.gossip.p2p & 51\% & 20\% \\
+        de.tum.gossip.p2p.packets & 50\% & 30\% \\
+        de.tum.gossip.p2p.protocol & 54\% & 43\% \\
+        de.tum.gossip.p2p.util & 0\% & 0\% \\
+        Total & 63\% & 42\% \\
+        \hline
+    \end{tabular}
+    \caption{Code coverage}
+    \label{fig:code-coverage}
+\end{figure}
+
+\subsection{Infrastructure Related Improvements}\label{subsec:infrastructure-related}
+
+The project needs some infrastructure-related adjustments.
+We currently don't employ a proper logging system which we plan to implement using \textit{log4j}.
+This milestone includes revisiting our error handling and ensuring user-readable errors
+are generated where necessary.

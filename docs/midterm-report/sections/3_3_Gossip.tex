@@ -1,0 +1,186 @@
+\subsection{Gossip Protocol}\label{subsec:gossip-protocol}
+
+The \textbf{Gossip Protocol} component implements the protocol spoken between individual Gossip peers.
+We rely on TCP to create a strongly connected network and rely on retransmissions and congestion control.
+
+As outlined in the project specification, hostkeys are distributed out-of-band.
+Therefore, we currently don't consider identity exchange (see \autoref{subsec:gossip-protocol-future-work}).
+Known identities with their respective public keys and last known connection information are stored
+on disk inside the \ttt{identities} folder controlled by the \textbf{IdentityStorage} component.
+For testing purposes, we supply the \ttt{generateHostKey.sh} script to generate hostkeys for testing purposes.
+
+Our protocol consists of two phases, the initial \textit{handshake} phase and the \textit{knowledge-spreading} phase
+for established connections.
+The \ttt{DISCONNECT} is the only packet valid in both phases and which might be sent at any time.
+Its structure is depicted in \autoref{fig:gossip-packet-disconnect}.
+It consists of a single \textit{reason} field describing the disconnect reason.
+We currently maintain the following possible reasons: \ttt{NORMAL(0)}, \ttt{UNSUPPORTED(1)}, \ttt{AUTHENTICATION(64)},
+\ttt{UNEXPECTED\_FAILURE(65)}, and \ttt{CANCELLED(66)}.
+
+\begin{figure}[h!]
+    \centering
+    \begin{bytefield}{32}
+        \bitheader{0,7-8,15-16,23-24,30-31} \\
+        \bitbox{16}{size} & \bitbox{16}{\texttt{DISCONNECT}}\\
+        \bitbox{8}{reason} & \bitbox{24}{reserved} \\
+    \end{bytefield}
+    \caption{GossipPacketDisconnect}
+    \label{fig:gossip-packet-disconnect}
+\end{figure}
+
+The two protocol phases are described in detail in the following two subsections.
+
+\subsubsection{Handshake}
+
+For the handshake, we recall the requirements set in \autoref{sec:requirements}.
+The primary purpose of the handshake is to create a secure channel for communication and verify
+and authenticate identity claims of the peers mutually.
+
+We rely on \textit{TLS 1.3}, serving us with a reliable, secure, and well-tested secure channel implementation.
+Consequentially, we employ ECDHE (Elliptic Curve Diffie Hellman with an Ephemeral key) for the key exchange,
+providing perfect forward secrecy for ongoing traffic.
+For application-data, encryption we configure the AEAD cipher \textit{ChaCha20-Poly1305} supporting our confidentiality
+and integrity security goals.
+
+Our TLS layer is configured to do mutual authentication, meaning both the server and the client provide respective
+certificates.
+The root of trust for a peer's certificate chain is derived from its hostkey (a self-signed certificate containing
+the public part of the hostkey).
+This certificate acts as a Certificate Authority to an intermediate certificate used within the TLS authentication phase.
+Within our \ttt{TrustManager} implementation, we verify the integrity of the certificate chain and ensure that
+the root certificate is self-signed with the expected hostkey identity.\footnote{
+To our best knowledge, we can't use an RSA-based certificate directly with TLS 1.3. Therefore, we employ this certificate chain.
+Within the below-outlined handshake process, we validate that the remote peer is in possession of the hostkey's private key
+    through a challenge-response procedure.
+}
+Certificate transmissions are encrypted with TLS 1.3.
+Therefore, this doesn't leak the peer's identity at the connection establishment.
+Each peer verifies that the TLS session was established with the expected hostkey ensuring that no man-in-the-middle
+attack is in progress.
+
+After completing the TLS handshake, we continue with the actual gossip handshake to verify possession of
+the hostkey's private key.
+
+\paragraph{Handshake Hello}
+
+While the hostkey-based TLS certificate proves that the peer was at some point in possession of the hostkey,
+we want to verify that the remote owns the hostkey right now.
+Therefore, we employ a simple challenge-response procedure.
+
+After the TLS handshake completes, the connection-initiating peer sends the
+\ttt{HANDSHAKE HELLO} (see \autoref{fig:gossip-packet-handshake-hello}) packet to the server.
+The packet specifies the used protocol \textit{version} (currently always \ttt{VERSION\_1(1)}).
+Lastly, the packet contains a random 64-bit challenge with the request to be signed with the server's hostkey.
+
+\begin{figure}[h!]
+    \centering
+    \begin{bytefield}{32}
+        \bitheader{0,7-8,15-16,23-24,30-31} \\
+        \bitbox{16}{size} & \bitbox{16}{\texttt{HANDSHAKE HELLO}}\\
+        \bitbox{8}{version} & \bitbox{24}{reserved} \\
+        \wordbox{2}{server challenge} \\
+    \end{bytefield}
+    \caption{GossipPacketHandshakeHello}
+    \label{fig:gossip-packet-handshake-hello}
+\end{figure}
+
+\paragraph{Identity Verification 1}
+
+The \ttt{IDENTITY VERIFICATION 1} packet is the response to the \ttt{HANDSHAKE HELLO}.
+The packet structure is depicted in \autoref{fig:gossip-packet-handshake-identity-verification-1}.
+The 512-byte long \textit{signature} field contains the server's response to the client-imposed challenge
+(signs the hash of the concatenation of a common prefix, the imposed challenge, and the hostkey identity).
+The \textit{client challenge} is a random 64-bit challenge with the request to be signed with the client's hostkey.
+
+At this point, the client has successfully verified the server's identity.
+In case of signature errors, the connection will be terminated after sending a corresponding \ttt{DISCONNECT} packet.
+
+\begin{figure}[h!]
+    \centering
+    \begin{bytefield}{32}
+        \bitheader{0,7-8,15-16,23-24,30-31} \\
+        \bitbox{16}{size} & \bitbox{16}{\texttt{IDENTITY VERIFICATION 1}}\\
+        \wordbox[tlr]{1}{signature} \\
+        \skippedwords \\
+        \wordbox[lr]{1}{} \\
+        \wordbox{2}{client challenge} \\
+    \end{bytefield}
+    \caption{GossipPacketHandshakeIdentityVerification1}
+    \label{fig:gossip-packet-handshake-identity-verification-1}
+\end{figure}
+
+\paragraph{Identity Verification 2}
+
+The client sends the \ttt{IDENTITY VERIFICATION 2} packet in response to \ttt{IDENTITY VERIFICATION 1}.
+The packet structure is depicted in \autoref{fig:gossip-packet-handshake-identity-verification-2}.
+It contains the \textit{signature} (512 bytes) to the challenge imposed in the previous packet.
+
+At this point, the server has successfully verified the client's identity.
+In case of signature errors, the connection will be terminated after sending a corresponding \ttt{DISCONNECT} packet.
+The server confirms the handshake by sending a \ttt{HANDSHAKE COMPLETE} packet to the client and switches to
+the \textit{Knowledge-Spreading} phase.
+
+\begin{figure}[h!]
+    \centering
+    \begin{bytefield}{32}
+        \bitheader{0,7-8,15-16,23-24,30-31} \\
+        \bitbox{16}{size} & \bitbox{16}{\texttt{IDENTITY VERIFICATION 2}}\\
+        \wordbox[tlr]{1}{signature} \\
+        \skippedwords \\
+        \wordbox[lrb]{1}{} \\
+    \end{bytefield}
+    \caption{GossipPacketHandshakeIdentityVerification2}
+    \label{fig:gossip-packet-handshake-identity-verification-2}
+\end{figure}
+
+\paragraph{Handshake Complete}
+
+The \ttt{HANDSHAKE COMPLETE} (\autoref{fig:gossip-packet-handshake-complete}) is the explicit signal to the client
+that the previous authentication steps were successful and that the client
+should also switch to the \textit{Knowledge Spreading} phase.
+% packet doesn't currently have any content, but in the future maybe!
+
+\begin{figure}[h!]
+    \centering
+    \begin{bytefield}{32}
+        \bitheader{0,7-8,15-16,23-24,30-31} \\
+        \bitbox{16}{size} & \bitbox{16}{\texttt{HANDSHAKE COMPLETE}}\\
+    \end{bytefield}
+    \caption{GossipPacketHandshakeComplete}
+    \label{fig:gossip-packet-handshake-complete}
+\end{figure}
+
+\subsubsection{Knowledge Spreading}
+
+Once clients complete the \textit{Handshake} phase, they reside in the \textit{Knowledge Spreading} phase
+and are active participants in the Gossip peer-to-peer network.
+
+Once an API consumer subscribes to a data type (see \autoref{subsec:api-interface}), it may announce
+data into the network.
+To do so, we overtime propagate the \ttt{SPREAD KNOWLEDGE} packet to all connected peers (see \autoref{fig:gossip-spread-knowledge}).
+For each announced data point, we generate a random 64-bit \textit{message id}.
+In combination with the \textit{ttl} field (defined by the API consumer and decremented at every hop),
+it provides means to avoid cycles in packet routing.
+
+On arrival of a \ttt{SPREAD KNOWLEDGE}, we provide the data contents to all API connections subscribed to the
+data type.
+If there are none, we discard the packet.
+Otherwise, we only forward the packet further into the network if all subscribed API connections report
+validity of the packet contents.
+This ensures that we don't propagate manipulated information into the network.
+
+\begin{figure}[h!]
+    \centering
+    \begin{bytefield}{32}
+        \bitheader{0,7-8,15-16,23-24,30-31} \\
+        \bitbox{16}{size} & \bitbox{16}{\texttt{SPREAD KNOWLEDGE}}\\
+        \wordbox[tlr]{1}{message id} \\
+        \wordbox[lrb]{1}{} \\
+        \bitbox{16}{ttl} & \bitbox{16}{data type} \\
+        \wordbox[tlr]{1}{data} \\
+        \skippedwords \\
+        \wordbox[lrb]{1}{}
+    \end{bytefield}
+    \caption{GossipPacketSpreadKnowledge}
+    \label{fig:gossip-spread-knowledge}
+\end{figure}

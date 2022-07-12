@@ -1,0 +1,19 @@
+\section{Changes}\label{sec:objective}
+
+With the current project state, we didn't identify any severe deviations from the project architecture
+we anticipated in the initial report.
+
+However, there were slight changes in the list of dependencies we used within the project.
+Namely, we added the following new dependencies:
+
+\begin{itemize}
+    \setlength\itemsep{0em}
+    \item \textbf{Guava}\footnote{https://guava.dev} is a commonly used utility library developed by Google, which
+    we use in several locations.
+    \item \textbf{Caffeine}\footnote{https://github.com/ben-manes/caffeine} is a high-performance, near-optimal
+    caching library that builds upon the Guava Cache API\@.
+    We use it within the \ttt{GossipModule} for data structures to enforce a time- or
+    space-based expiry on its contents.
+    \item \textbf{commons-cli}\footnote{https://commons.apache.org/proper/commons-cli/} is a library from the
+    Apache Software Foundation to parse command-line options in Java applications easily.
+\end{itemize}
