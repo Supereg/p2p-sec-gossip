@@ -1,8 +1,14 @@
 package de.tum.gossip.net;
 
+import de.tum.gossip.net.packets.InboundPacketHandler;
+import de.tum.gossip.net.packets.Packet;
+import de.tum.gossip.net.util.ByteBufUtils;
+import de.tum.gossip.net.util.ChannelCloseReason;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.Promise;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,7 +21,7 @@ public class E2ENetworkingTests {
         void handle(HelloPacket packet);
     }
 
-    private static class HelloPacket implements OutboundPacket, InboundPacket<HelloPacketHandler> {
+    private static class HelloPacket implements Packet<HelloPacketHandler> {
         public String message;
 
         public HelloPacket() {}
@@ -41,7 +47,13 @@ public class E2ENetworkingTests {
     }
 
     private class EchoServerHandler implements HelloPacketHandler {
+        private final Logger logger = LogManager.getLogger(EchoServerHandler.class);
         private ChannelInboundHandler channel;
+
+        @Override
+        public Logger logger() {
+            return logger;
+        }
 
         @Override
         public void onConnect(ChannelInboundHandler channel) {
@@ -50,7 +62,7 @@ public class E2ENetworkingTests {
         }
 
         @Override
-        public void onDisconnect() {
+        public void onDisconnect(ChannelCloseReason reason) {
             onDisconnectCalled++;
         }
 
@@ -59,11 +71,18 @@ public class E2ENetworkingTests {
             packetHandleCalled++;
 
             serverReceivedMessage = packet.message;
-            channel.getHandle().writeAndFlush(packet); // TODO replace with "sendPacket"!
+            channel.sendPacket(packet);
         }
     }
 
     private class EchoClientHandler implements HelloPacketHandler {
+        private final Logger logger = LogManager.getLogger(EchoClientHandler.class);
+
+        @Override
+        public Logger logger() {
+            return logger;
+        }
+
         @Override
         public void onConnect(ChannelInboundHandler channel) {
             onConnectCalled++;
@@ -73,7 +92,7 @@ public class E2ENetworkingTests {
         }
 
         @Override
-        public void onDisconnect() {
+        public void onDisconnect(ChannelCloseReason reason) {
             onDisconnectCalled++;
         }
 
@@ -107,8 +126,8 @@ public class E2ENetworkingTests {
         packetReceivePromise = eventLoop.next().newPromise();
 
         // both operations are blocking
-        server.run();
-        client.connect();
+        server.bind().sync();
+        client.connect().sync();
 
         // onConnect of the client will write the HelloPacket!
 

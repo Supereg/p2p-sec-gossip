@@ -21,8 +21,9 @@ dependencies {
     // Use JUnit Jupiter for testing.
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
 
-    // This dependency is used by the application.
     implementation("com.google.guava:guava:31.1-jre")
+    // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
     // https://mvnrepository.com/artifact/commons-cli/commons-cli
     implementation("commons-cli:commons-cli:1.5.0")
@@ -30,8 +31,12 @@ dependencies {
     implementation("io.netty:netty-all:4.1.78.Final")
     // https://mvnrepository.com/artifact/org.ini4j/ini4j
     implementation("org.ini4j:ini4j:0.5.4")
-    // https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on
-    implementation("org.bouncycastle:bcprov-jdk15on:1.70")
+    // https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk15on
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
+
+    // https://mvnrepository.com/artifact/log4j/log4j
+    implementation("org.apache.logging.log4j:log4j-api:2.18.0")
+    implementation("org.apache.logging.log4j:log4j-core:2.18.0")
 }
 
 application {

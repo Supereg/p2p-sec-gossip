@@ -1,4 +1,4 @@
-package de.tum.gossip.net;
+package de.tum.gossip.net.util;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;

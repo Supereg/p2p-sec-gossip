@@ -1,17 +1,18 @@
 package de.tum.gossip.net;
 
-import de.tum.gossip.api.GossipAnnouncePacket;
-import de.tum.gossip.api.GossipNotificationPacket;
-import de.tum.gossip.api.GossipNotifyPacket;
-import de.tum.gossip.api.GossipValidationPacket;
+import de.tum.gossip.api.packets.APIPacketGossipAnnounce;
+import de.tum.gossip.api.packets.APIPacketGossipNotification;
+import de.tum.gossip.api.packets.APIPacketGossipNotify;
+import de.tum.gossip.api.packets.APIPacketGossipValidation;
+import de.tum.gossip.p2p.util.DataType;
+import de.tum.gossip.p2p.util.MessageNotificationId;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Test;
 
 import java.util.HexFormat;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by Andi on 21.06.22.
@@ -29,11 +30,11 @@ class APIPacketTests {
                                 + "31:32:33:34" // data
                         ));
 
-        var packet = new GossipAnnouncePacket();
+        var packet = new APIPacketGossipAnnounce();
         packet.deserialize(msg);
 
-        assertEquals(0x30, packet.getTTL());
-        assertEquals(1, packet.getDataType());
+        assertEquals(0x30, packet.ttl);
+        assertEquals(1, packet.dataType);
     }
 
     @Test
@@ -46,10 +47,10 @@ class APIPacketTests {
                                 + "00:01" // data type
                         ));
 
-        var packet = new GossipNotifyPacket();
+        var packet = new APIPacketGossipNotify();
         packet.deserialize(msg);
 
-        assertEquals(1, packet.getDataType());
+        assertEquals(1, packet.dataType);
     }
 
     @Test
@@ -62,20 +63,16 @@ class APIPacketTests {
                                 + "00:01" // reserved + v
                         ));
 
-        var packet = new GossipValidationPacket();
+        var packet = new APIPacketGossipValidation();
         packet.deserialize(msg);
 
-        assertEquals(1337, packet.getMessageId());
-        assertTrue(packet.isValid());
+        assertArrayEquals(new byte[] {0x05, 0x39}, packet.messageId.messageId());
+        assertTrue(packet.valid);
     }
 
     @Test
     void encodeNotificationPacketTest() {
-        var packet = new GossipNotificationPacket();
-
-        packet.setMessageId(0x10);
-        packet.setDataType(0x20);
-        packet.setData(HexFormat.ofDelimiter(":").parseHex("31:32:33:34"));
+        var packet = new APIPacketGossipNotification(new MessageNotificationId(0x10), new DataType(0x20), HexFormat.ofDelimiter(":").parseHex("31:32:33:34"));
 
         ByteBuf byteBuf = Unpooled.buffer();
         packet.serialize(byteBuf);

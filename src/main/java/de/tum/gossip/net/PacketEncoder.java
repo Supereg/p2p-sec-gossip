@@ -1,6 +1,7 @@
 package de.tum.gossip.net;
 
 import com.google.common.base.Preconditions;
+import de.tum.gossip.net.packets.OutboundPacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;

@@ -1,20 +1,29 @@
 package de.tum.gossip.net;
 
 import com.google.common.base.Preconditions;
+import de.tum.gossip.net.packets.InboundPacket;
+import de.tum.gossip.net.packets.InboundPacketHandler;
+import de.tum.gossip.net.packets.OutboundPacket;
 import io.netty.channel.EventLoopGroup;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.net.ssl.SSLException;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
  * Created by Andi on 21.06.22.
  */
-public class ProtocolDescription {
-    private final Map<Integer, Supplier<? extends InboundPacket<? extends InboundPacketHandler>>> inboundPacketSuppliers = new HashMap<>();
-    private final Map<Class<? extends OutboundPacket>, Integer> outboundPacketIds = new HashMap<>();
+public class ProtocolDescription implements Cloneable {
+    private HashMap<Integer, Supplier<? extends InboundPacket<? extends InboundPacketHandler>>> inboundPacketSuppliers = new HashMap<>();
+    private HashMap<Class<? extends OutboundPacket>, Integer> outboundPacketIds = new HashMap<>();
+
+    @Nullable
+    private SslContext sslContext;
 
     public ProtocolDescription() {}
 
@@ -62,6 +71,23 @@ public class ProtocolDescription {
         return Optional.ofNullable(packetId);
     }
 
+    public ProtocolDescription withSslContext(SslContextBuilder builder) {
+        try {
+            return withSslContext(builder.build());
+        } catch (SSLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public ProtocolDescription withSslContext(@NonNull SslContext sslContext) {
+        this.sslContext = sslContext;
+        return this;
+    }
+
+    public @Nullable SslContext getSslContext() {
+        return sslContext;
+    }
+
     public <Handler extends InboundPacketHandler> TCPServer makeServer(int port, EventLoopGroup eventLoopGroup, Supplier<Handler> defaultHandler) {
         return this.makeServer(null, port, eventLoopGroup, defaultHandler);
     }
@@ -72,5 +98,24 @@ public class ProtocolDescription {
 
     public <Handler extends InboundPacketHandler> TCPClient makeClient(String hostname, int port, EventLoopGroup eventLoopGroup, Supplier<Handler> defaultHandler) {
         return new TCPClient(hostname, port, eventLoopGroup, this, defaultHandler);
+    }
+
+
+    @Override
+    public ProtocolDescription clone() {
+        try {
+            ProtocolDescription clone = (ProtocolDescription) super.clone();
+
+            //noinspection unchecked
+            clone.inboundPacketSuppliers = (HashMap<Integer, Supplier<? extends InboundPacket<? extends InboundPacketHandler>>>) inboundPacketSuppliers.clone();
+            //noinspection unchecked
+            clone.outboundPacketIds = (HashMap<Class<? extends OutboundPacket>, Integer>) outboundPacketIds.clone();
+
+            clone.sslContext = null;
+
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }
