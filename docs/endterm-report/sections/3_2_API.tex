@@ -1,0 +1,9 @@
+\subsection{API Interface}\label{subsec:api-interface}
+
+The \textbf{API Interface} implements the TCP socket-based API used by other modules to interact with Gossip (see \autoref{sec:requirements}).
+Packet definitions are provided for the four API messages
+\ttt{ANNOUNCE}, \ttt{NOTIFY}, \ttt{NOTIFICATION}, and \ttt{VALIDATION}, as outlined in the specification.
+The component relies on the networking abstractions introduced in \autoref{subsec:networking}.
+
+Incoming API message calls are forwarded to the \ttt{GossipModule}, which is part of the \textit{Gossip Protocol} component.
+The module is provided with a connection handle to send out potential notifications later.

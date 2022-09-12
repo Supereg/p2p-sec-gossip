@@ -1,0 +1,18 @@
+\section{Future Work}\label{sec:future-work}
+
+This section details future work we see necessary to view the project as completed.
+
+\subsection{Gossip Protocol}\label{subsec:gossip-protocol-future-work}
+
+Lastly, as specified, hostkeys and connection information are assumed to be exchanged out-of-band.
+Future work could research solutions for session onboarding as well as means to spread
+information about known peers into the network.
+We already discussed, that we could employ a PoW-based mechanism to update the peer's associated ip address (see \autoref{subsec:gossip-protocol}).
+Similarly, a PoW-based process could be implemented to do session onboarding.
+Considerations will have to be taken to reduce the effective attack surface of an Eclipse attack.
+
+\subsection{Infrastructure Related Improvements}\label{subsec:infrastructure-related}
+
+The project setup needs some minor infrastructure-related adjustments.
+It was intended to employ a linter within the CI pipeline, however the respective PR
+was not completed (see \href{https://gitlab.lrz.de/netintum/teaching/p2psec\_projects\_2022/Gossip-10/-/merge_requests/3}{\!3}).

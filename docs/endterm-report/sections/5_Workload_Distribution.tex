@@ -1,0 +1,39 @@
+\section{Workload Distribution}\label{sec:workload-distribution}
+
+We would like to refer to the milestones outlined in the initial report when explaining our workload distribution.
+
+\begin{itemize}
+    \setlength\itemsep{0em}
+    \item \textbf{Project Setup}:
+    The fundamental Java project setup including the Gradle build configurations were
+    configured by Andreas.
+    Additionally, Andreas built the CI pipeline to automate the tests and ensure the build integrity.
+    We employed a PR-template to make pull request easier to draft and easier to review.
+    \item \textbf{API}:
+    Andreas has designed and implemented overall structures of the core networking layer,
+    which are used by API and P2P connections.
+    Chung Hwan implemented the serializing and deserializing methods for the API message formats.
+    \item \textbf{P2P Protocol}:
+    Andreas designed the handshake protocol and implemented it with including the definition of packet formats and handler logics.
+    The business logic (implemented within the \ttt{GossipModule}) were implemented by Andreas.
+    \item \textbf{Tests}:
+    Chung Hwan wrote the in-memory test cases for the packet decoding and encoding.
+    Andreas wrote the end-to-end test cases to ensure the network layer works as intended.
+    \item \textbf{Documentation \& Reports}:
+    Chung Hwan and Andreas co-worked writing the midterm report.
+    Andreas updated its contents to form the endterm report.
+\end{itemize}
+
+\subsection{Individual efforts}\label{subsec:individual-efforts}
+
+The overall git commit history provides an additional source for the individual workload distribution
+in addition to the information outlined below.
+
+\paragraph{Andreas:} Since the initial report, I have roughly spent 85 hours in total on the project.
+This metric is provided by the time tracking tool of my IDE (code and reports).
+It, therefore, doesn't account for time spent outside the
+IDE  (e.g., time spent with research, lecture material or online material around the topic
+or tools).
+
+\paragraph{Chung Hwan:} I invested about 30 hours for this project after submitting the initial report.
+Since this metric is calculated from commit history, it includes only the time the code was written.

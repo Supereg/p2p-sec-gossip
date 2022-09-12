@@ -1,0 +1,29 @@
+\section{Changes}\label{sec:objective}
+
+With the final state of the project, we didn't identify any severe deviations from the project architecture
+we anticipated in the initial report.
+
+However, there were slight changes in the list of dependencies we used within the project.
+Namely, we added the following new dependencies:
+
+\begin{itemize}
+    \setlength\itemsep{0em}
+    \item \textbf{Guava}\footnote{https://guava.dev} is a commonly used utility library developed by Google, which
+    we use in several locations.
+    \item \textbf{Caffeine}\footnote{https://github.com/ben-manes/caffeine} is a high-performance, near-optimal
+    caching library that builds upon the Guava Cache API\@.
+    We use it within the \ttt{GossipModule} for data structures to enforce a time- or
+    space-based expiry on its contents.
+    \item \textbf{JCommander}\footnote{https://jcommander.org} is a library to parse command-line options in Java applications
+    in a declarative way.
+    (previously, in the midterm report, we used Apache Commons CLI before we switched to JCommander).
+    \item \textbf{Gson}\footnote{https://github.com/google/gson} is a library from Google to
+    make JSON Serialization and Deserialization easy.
+    \item \textbf{commons-lang}\footnote{https://commons.apache.org/lang} is a library from
+    the Apache Software Foundation that provides us with infrastructure to easily realize
+    rate limiting.
+    \item \textbf{commons-configuration2}\footnote{https://commons.apache.org/proper/commons-configuration/} is
+    a library from the Apache Software Foundation that we use to parse the Windows INI file format.
+    This replaces the \textit{init4j} library, our previous choice for INI file parsing.
+    We replaced it, as it wasn't able to parse properties on the global section (e.g., the \textit{hostkey} option).
+\end{itemize}
