@@ -7,6 +7,7 @@ import io.netty.handler.ssl.SslHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -76,6 +77,27 @@ public class GossipCrypto {
             return new HostKey(publicKey, privateKey);
         } catch (IOException e) {
             throw new RuntimeException("Failed to read hostkey file", e);
+        }
+    }
+
+    public static RSAPublicKey importPublicKey(File file) {
+        try (FileReader reader = new FileReader(file)) {
+            PEMParser parser = new PEMParser(reader);
+
+            var object = parser.readObject();
+
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+            converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+
+            if (object instanceof PEMKeyPair keyPair) {
+                return (BCRSAPublicKey) converter.getPublicKey(keyPair.getPublicKeyInfo());
+            } else if (object instanceof SubjectPublicKeyInfo publicKeyInfo) {
+                return (BCRSAPublicKey) converter.getPublicKey(publicKeyInfo);
+            } else {
+                throw new RuntimeException("Failed to read public key from pem object: " + object);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

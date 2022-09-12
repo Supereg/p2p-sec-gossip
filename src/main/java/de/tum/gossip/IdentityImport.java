@@ -1,6 +1,7 @@
 package de.tum.gossip;
 
 import de.tum.gossip.crypto.GossipCrypto;
+import de.tum.gossip.crypto.PeerIdentity;
 import de.tum.gossip.p2p.storage.PeerIdentityStorage;
 import de.tum.gossip.p2p.storage.StoredIdentity;
 
@@ -24,10 +25,10 @@ public class IdentityImport {
             throw new Exception("The provided PEM input file doesn't exist at the location " + args.pemLocation);
         }
 
-        var key = GossipCrypto.readHostKey(inputFile);
+        var publicKey = GossipCrypto.importPublicKey(inputFile);
 
-        var identity = key.identity;
-        var entry = new StoredIdentity(args.address, args.port, key.publicKey);
+        var identity = new PeerIdentity(publicKey);
+        var entry = new StoredIdentity(args.address, args.port, publicKey);
 
         PeerIdentityStorage.unsafeStoreKey(storageFolder, identity, entry);
 

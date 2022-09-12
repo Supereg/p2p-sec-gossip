@@ -9,6 +9,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     application
+    jacoco
 }
 
 repositories {
@@ -46,6 +47,10 @@ dependencies {
 application {
     // Define the main class for the application.
     mainClass.set("de.tum.gossip.CLI")
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test) // tests are required to run before generating the report
 }
 
 tasks.named<Test>("test") {
