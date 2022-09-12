@@ -68,6 +68,7 @@ public class TCPClient {
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .option(ChannelOption.SO_KEEPALIVE, true)
                 .handler(new ConnectionInitializer(protocol, defaultHandlerSupplier, handshakePromise));
 
         return bootstrap.connect(hostname, port)

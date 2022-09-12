@@ -53,6 +53,7 @@ public class TCPServer {
                 .channel(NioServerSocketChannel.class)
                 .childOption(ChannelOption.TCP_NODELAY, true)
                 .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childHandler(new ConnectionInitializer(protocol, defaultHandlerSupplier, null));
 
         return (hostname != null && !hostname.isEmpty() ? bootstrap.bind(hostname, port) : bootstrap.bind(port))

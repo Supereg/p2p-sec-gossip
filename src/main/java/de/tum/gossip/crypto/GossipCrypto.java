@@ -1,10 +1,8 @@
 package de.tum.gossip.crypto;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import de.tum.gossip.net.ChannelInboundHandler;
 import de.tum.gossip.net.ConnectionInitializer;
-import de.tum.gossip.p2p.GossipPeerInfo;
 import io.netty.handler.ssl.SslHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +32,6 @@ import java.util.Optional;
  */
 public class GossipCrypto {
     public static final int SHA256_HASH_BYTES_LENGTH = 32;
-    public static final int RSA_SIGNATURE_BYTES_LENGTH = 512; // TODO coule be removed!
     public static final Logger logger = LogManager.getLogger(GossipCrypto.class);
 
     public static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -133,7 +130,7 @@ public class GossipCrypto {
 
         if ((result.length -1) * 2 == hex.length() && result[0] == 0) {
             // some super weird behavior of BigInteger.toByteArray where it sometimes? prepends the resulting
-            // array with a zero byte, resulting in a off by one error.
+            // array with a zero byte, resulting in an off by one error.
             var tmp = new byte[result.length - 1];
             System.arraycopy(result, 1, tmp, 0, tmp.length);
             result = tmp;
@@ -144,20 +141,6 @@ public class GossipCrypto {
 
     public static String formatHex(byte[] bytes) {
         return String.format("%0" + (bytes.length*2) + "x", new BigInteger(1, bytes));
-    }
-
-    public static byte[] combineBytes(byte[]... bytesBytes) {
-        int size = 0;
-        for (byte[] bytes : bytesBytes) {
-            size += bytes.length;
-        }
-
-        var stream = new ByteArrayOutputStream(size);
-        for (byte[] bytes : bytesBytes) {
-            stream.writeBytes(bytes);
-        }
-
-        return stream.toByteArray();
     }
 
     public static SslHandler getSslHandler(ChannelInboundHandler channel) {
@@ -188,25 +171,6 @@ public class GossipCrypto {
     }
 
     public static class Signature {
-        // TODO removal?
-        public static byte[] signChallenge(HostKey hostKey, byte[] challenge) {
-            var bytes = GossipCrypto.combineBytes(
-                    "HS-CHALLENGE".getBytes(Charsets.UTF_8),
-                    challenge,
-                    hostKey.identity.rawBytes()
-            );
-            return sign(bytes, hostKey);
-        }
-
-        public static boolean verifyChallenge(GossipPeerInfo peerInfo, byte[] signature, byte[] challenge) {
-            var bytes = GossipCrypto.combineBytes(
-                    "HS-CHALLENGE".getBytes(Charsets.UTF_8),
-                    challenge,
-                    peerInfo.identity().rawBytes()
-            );
-            return verify(bytes, signature, peerInfo.publicKey());
-        }
-
         public static byte[] sign(byte[] data, HostKey hostkey) {
             java.security.Signature signer;
             try {

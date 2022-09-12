@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
+import java.net.InetSocketAddress;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -132,30 +133,19 @@ public class GossipServerHandshakeListener implements GossipPacketHandler {
 
         clientPeerInfo = new GossipPeerInfo(identity, storedIdentity.publicKey());
 
-        // TODO PoW challenge, if we encounter an unexpected ip address!
+        var remoteAddress = ((InetSocketAddress) channel.getHandle().remoteAddress()).getAddress().getHostAddress();
+        if (!remoteAddress.equals(storedIdentity.lastSeenHostname())) {
+            // We strictly bind the ip address to the peer's identity.
+            // A future version of gossip could employ a PoW based procedure to update the host address at this point,
+            // to allow for a more robust implementation.
+            channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.AUTHENTICATION, "Unknown host address!"));
+            return;
+        }
 
         // switching protocol state into SESSION
         var handler = new GossipEstablishedSession(gossipModule, clientPeerInfo, true);
         channel.replacePacketHandler(handler);
     }
-
-    /*
-    public synchronized void handle(GossipPacketHandshakeIdentityVerification2 packet) {
-        if (clientPeerInfo == null) {
-            channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.CANCELLED, "Received PacketHandshakeIdentityVerification in illegal state!"));
-            return;
-        }
-
-        // verify that the specified identity is actually owned by our remote peer right now
-        if (!GossipCrypto.Signature.verifyChallenge(clientPeerInfo, packet.signature, clientChallenge)) {
-            channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.AUTHENTICATION, "Failed to verify signature of identity of remote peer!"));
-            return;
-        }
-
-        channel.sendPacket(new GossipHandshakeComplete());
-        switchProtocols();
-    }
-     */
 
     @Override
     public synchronized void handle(GossipPacketDisconnect packet) {

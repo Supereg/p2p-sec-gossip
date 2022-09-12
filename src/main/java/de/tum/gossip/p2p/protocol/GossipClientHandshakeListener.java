@@ -87,34 +87,7 @@ public class GossipClientHandshakeListener implements GossipPacketHandler {
         this.channel = null;
     }
 
-    /*
-    public synchronized void handle(GossipPacketHandshakeIdentityVerification1 packet) {
-        if (processedVerificationRequest) {
-            channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.CANCELLED, "Received IdentityVerificationRequest in illegal state!"));
-            return;
-        }
-
-        if (!GossipCrypto.Signature.verifyChallenge(serverPeerInfo, packet.signature, serverChallenge)) {
-            channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.AUTHENTICATION, "Failed to verify signature of identity of remote peer!"));
-            return;
-        }
-
-        var signature = GossipCrypto.Signature.signChallenge(gossipModule.hostKey, packet.clientChallenge);
-
-        processedVerificationRequest = true;
-
-        channel.sendPacket(new GossipPacketHandshakeIdentityVerification2(signature));
-    }
-    */
-
     public synchronized void handle(GossipHandshakeComplete packet) {
-        /*
-        if (!processedVerificationRequest) {
-            channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.CANCELLED, "Received GossipHandshakeComplete in illegal state!"));
-            return;
-        }
-        */
-
         var handler = new GossipEstablishedSession(gossipModule, serverPeerInfo, false);
         channel.replacePacketHandler(handler);
     }

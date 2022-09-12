@@ -2,17 +2,16 @@ package de.tum.gossip.p2p.protocol;
 
 import com.google.common.base.Preconditions;
 import de.tum.gossip.api.packets.GossipAPIPacket;
-import de.tum.gossip.net.util.ChannelCloseReason;
-import de.tum.gossip.net.util.ChannelCloseReasonCause;
 import de.tum.gossip.net.ChannelInboundHandler;
 import de.tum.gossip.net.ConnectionInitializer;
 import de.tum.gossip.net.packets.OutboundPacket;
+import de.tum.gossip.net.util.ChannelCloseReason;
+import de.tum.gossip.net.util.ChannelCloseReasonCause;
 import de.tum.gossip.p2p.GossipModule;
 import de.tum.gossip.p2p.GossipPeerInfo;
 import de.tum.gossip.p2p.packets.GossipHandshakeComplete;
 import de.tum.gossip.p2p.packets.GossipPacketDisconnect;
 import de.tum.gossip.p2p.packets.GossipPacketSpreadKnowledge;
-import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.logging.log4j.LogManager;
@@ -59,9 +58,6 @@ public class GossipEstablishedSession implements GossipPacketHandler, Establishe
 
     @Override
     public void onConnect(ChannelInboundHandler channel) {
-        // TODO implement a heartbeat message?
-        channel.getHandle().pipeline().addFirst(ConnectionInitializer.Ids.TIMEOUT, new ReadTimeoutHandler(30));
-
         this.channel = channel;
 
         var result = module.adoptSession(this);
