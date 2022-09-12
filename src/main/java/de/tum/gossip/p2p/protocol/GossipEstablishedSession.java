@@ -7,6 +7,7 @@ import de.tum.gossip.net.ConnectionInitializer;
 import de.tum.gossip.net.packets.OutboundPacket;
 import de.tum.gossip.net.util.ChannelCloseReason;
 import de.tum.gossip.net.util.ChannelCloseReasonCause;
+import de.tum.gossip.p2p.GossipException;
 import de.tum.gossip.p2p.GossipModule;
 import de.tum.gossip.p2p.GossipPeerInfo;
 import de.tum.gossip.p2p.packets.GossipHandshakeComplete;
@@ -97,7 +98,11 @@ public class GossipEstablishedSession implements GossipPacketHandler, Establishe
     }
 
     public void handle(GossipPacketSpreadKnowledge packet) {
-        module.handleIncomingKnowledgeSpread(this, packet);
+        try {
+            module.handleIncomingKnowledgeSpread(this, packet);
+        } catch (GossipException e) {
+            channel.close(new GossipPacketDisconnect.OutboundCloseReason(GossipPacketDisconnect.Reason.NOT_ALLOWED, e.getMessage()));
+        }
     }
 
     @Override

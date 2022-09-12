@@ -50,7 +50,7 @@ public class MockModuleConnection {
             }
 
             var session = this.equals(sessionAToB) ? sessionBtoA : sessionAToB;
-            target.handleIncomingKnowledgeSpread(session, knowledgePacket);
+            Assertions.assertDoesNotThrow(() -> target.handleIncomingKnowledgeSpread(session, knowledgePacket));
         }
     }
 

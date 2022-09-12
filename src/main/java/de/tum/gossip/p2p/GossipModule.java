@@ -2,6 +2,7 @@ package de.tum.gossip.p2p;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -37,6 +38,7 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
+import org.apache.commons.lang3.concurrent.TimedSemaphore;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -48,6 +50,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -115,6 +118,23 @@ public class GossipModule {
      */
     private final Cache<GossipMessageId, GossipMessage> gossipKnowledgeBase;
 
+    private final LoadingCache<PeerIdentity, RateLimiting> connectRateLimiting;
+    private final LoadingCache<PeerIdentity, RateLimiting> knowledgeSpreadRateLimiting;
+
+    private class RateLimiting {
+        private final TimedSemaphore operationsPerSecond;
+        private final TimedSemaphore operationsPerMinute;
+
+        public RateLimiting(int ops, int opm) {
+            this.operationsPerSecond = new TimedSemaphore(eventLoopGroup, 1, TimeUnit.SECONDS, ops);
+            this.operationsPerMinute = new TimedSemaphore(eventLoopGroup, 1, TimeUnit.MINUTES, opm);
+        }
+
+        public boolean isAllowed() {
+            return operationsPerSecond.tryAcquire() && operationsPerMinute.tryAcquire();
+        }
+    }
+
     public GossipModule(ConfigurationFile configuration, EventLoopGroup eventLoopGroup) {
         this(configuration, eventLoopGroup, new PeerIdentityStorage());
     }
@@ -138,6 +158,7 @@ public class GossipModule {
         this.messageIdTranslation = Maps.newConcurrentMap();
         this.gossipKnowledgeBase = Caffeine.newBuilder()
                 .maximumSize(configuration.cache_size())
+                .executor(this.eventLoopGroup)
                 .evictionListener((key, value, cause) -> {
                     Preconditions.checkState(cause != RemovalCause.COLLECTED, "Encountered unexpected COLLECTED cause");
                     Preconditions.checkNotNull(value); // can't be null, as removal cause will never be COLLECTED
@@ -147,6 +168,16 @@ public class GossipModule {
                     }
                 })
                 .build();
+
+        this.connectRateLimiting = Caffeine.newBuilder()
+                .maximumSize(65535)
+                .executor(this.eventLoopGroup)
+                .build(key -> new RateLimiting(10, 100));
+
+        this.knowledgeSpreadRateLimiting = Caffeine.newBuilder()
+                .maximumSize(65535)
+                .executor(this.eventLoopGroup)
+                .build(key -> new RateLimiting(100, 2000));
     }
 
     public ConcurrentMap<PeerIdentity, GossipClientContext> clients() {
@@ -248,10 +279,18 @@ public class GossipModule {
     }
 
     public Optional<ChannelCloseReason> adoptSession(EstablishedSession session) {
+        // by asserting the ip address in the handshake handler, we do a ip address based connect
+        // rate limiting implicitly here!
+        var rateLimiting = connectRateLimiting.get(session.peerInfo().identity());
+        if (!rateLimiting.isAllowed()) {
+            return Optional.of(new GossipPacketDisconnect.OutboundCloseReason(
+                    GossipPacketDisconnect.Reason.NOT_ALLOWED,
+                    "Reached rate limit for session adoption!"
+            ));
+        }
+
         sessionListLock.writeLock().lock();
         try {
-            // TODO do ip based rate limiting (= prevents some multiplex sybil attacks => mention that in the paper!)?
-
             if (sessionList.size() >= networkDegree) {
                 return Optional.of(new GossipPacketDisconnect.OutboundCloseReason(
                         GossipPacketDisconnect.Reason.BUSY,
@@ -398,8 +437,11 @@ public class GossipModule {
         spreadDataIntoNetwork(gossipMessage);
     }
 
-    public void handleIncomingKnowledgeSpread(EstablishedSession session, GossipPacketSpreadKnowledge packet) {
-        // TODO session-based rate limit!
+    public void handleIncomingKnowledgeSpread(EstablishedSession session, GossipPacketSpreadKnowledge packet) throws GossipException {
+        var rateLimiting = knowledgeSpreadRateLimiting.get(session.peerInfo().identity());
+        if (!rateLimiting.isAllowed()) {
+            throw new GossipException(GossipException.Type.RATE_LIMIT);
+        }
 
         AtomicBoolean didExist = new AtomicBoolean(true);
         var gossipMessage = gossipKnowledgeBase.get(packet.messageId, (id) -> {
