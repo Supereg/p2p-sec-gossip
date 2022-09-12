@@ -24,6 +24,8 @@ dependencies {
     implementation("com.google.guava:guava:31.1-jre")
     // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
     implementation("org.apache.commons:commons-lang3:3.12.0")
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-configuration2
+    implementation("org.apache.commons:commons-configuration2:2.8.0")
     // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
@@ -33,8 +35,6 @@ dependencies {
     implementation("com.beust:jcommander:1.82")
     // https://mvnrepository.com/artifact/io.netty/netty-all
     implementation("io.netty:netty-all:4.1.78.Final")
-    // https://mvnrepository.com/artifact/org.ini4j/ini4j
-    implementation("org.ini4j:ini4j:0.5.4")
     // https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk15on
     implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
 

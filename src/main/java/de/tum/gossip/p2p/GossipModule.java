@@ -529,7 +529,6 @@ public class GossipModule {
         int count = 0;
         sessionListLock.readLock().lock();
         try {
-            // TODO be more lenient on the network (spread at random, in intervals!)
             for (EstablishedSession session : sessionList) {
                 boolean didChange = gossipMessage.completedTransmissions.add(session);
                 if (!didChange) {

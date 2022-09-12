@@ -31,7 +31,8 @@ public class GossipPacketDisconnect implements Packet<GossipPacketHandler> {
         DUPLICATE(67),
         /** The requested resource or operation is unavailable. */
         BUSY(68),
-        NOT_ALLOWED(69), // TODO enforce rate limiting with it!
+        /** The request resource or operation was not allowed to be accessed. We use it to enforce rate limiting. */
+        NOT_ALLOWED(69),
         /** The connection or operation timed out. */
         TIMEOUT(70),
         ;

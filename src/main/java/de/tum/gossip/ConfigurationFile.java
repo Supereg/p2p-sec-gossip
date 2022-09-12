@@ -1,20 +1,20 @@
 package de.tum.gossip;
 
 import com.google.common.base.Preconditions;
-import org.ini4j.Ini;
-import org.ini4j.IniPreferences;
+import org.apache.commons.configuration2.INIConfiguration;
 
 import java.io.File;
-import java.util.prefs.Preferences;
+import java.io.FileReader;
 
 /**
  * This java record represents state of the VoidPhone configuration file.
- *
+ * <p>
  * The configuration file is formatted in the Windows INI file format.
  *
  * @param hostkey     The hostkey of the peer; it's public-private key pair.
  *                    A 4096-bit RSA key pair store in PEM format.
  *                    The SHA256 hash of the public key serves as the peers `identity`.
+ *                    It is located relative to the current working directory.
  * @param cache_size  Maximum number of data items to be held as part of the peer's knowledge base.
  *                    Older items will be removed to ensure space for newer items if the peer's
  *                    knowledge base exceeds this limit.
@@ -50,9 +50,9 @@ public record ConfigurationFile(
         int api_port
 ) {
     public ConfigurationFile {
-        Preconditions.checkState(!hostkey.equals(""), "`hostkey` option must be defined!");
-        Preconditions.checkState(!p2p_address.equals(""), "`gossip/p2p_address` option must be defined!");
-        Preconditions.checkState(!api_address.equals(""), "`gossip/api_address` option must be defined!");
+        Preconditions.checkNotNull(hostkey, "`hostkey` option must be defined!");
+        Preconditions.checkNotNull(p2p_address, "`gossip/p2p_address` option must be defined!");
+        Preconditions.checkNotNull(api_address, "`gossip/api_address` option must be defined!");
     }
 
     public static ConfigurationFile readFromFile(String filePath) throws Exception {
@@ -60,19 +60,21 @@ public record ConfigurationFile(
     }
 
     public static ConfigurationFile readFromFile(File file) throws Exception {
-        Preferences preferences = new IniPreferences(new Ini(file));
+        var configuration = new INIConfiguration();
 
-        // TODO hostkey might not be located in the node "global"!!!
-        Preferences globalNode = preferences.node("global");
-        Preferences gossipNode = preferences.node("gossip");
+        try (FileReader reader = new FileReader(file)) {
+            configuration.read(reader);
+        }
 
-        // TODO relative to the configuration file?
-        var hostkey = globalNode.get("hostkey", "");
+        var globalSection = configuration.getSection(null);
+        var gossipSection = configuration.getSection("gossip");
 
-        var cache_size = gossipNode.getInt("cache_size", 50);
-        var degree = gossipNode.getInt("degree", 30);
-        var p2p_address_split = gossipNode.get("p2p_address", "").split(":");
-        var api_address_split = gossipNode.get("api_address", "").split(":");
+        var hostkey = globalSection.getString("hostkey");
+
+        var cache_size = gossipSection.getInt("cache_size", 50);
+        var degree = gossipSection.getInt("degree", 30);
+        var p2p_address_split = gossipSection.getString("p2p_address").split(":");
+        var api_address_split = gossipSection.getString("api_address").split(":");
 
         Preconditions.checkState(p2p_address_split.length == 2, "Illegal format for `gossip/p2p_address`");
         Preconditions.checkState(api_address_split.length == 2, "Illegal format for `gossip/api_address`");

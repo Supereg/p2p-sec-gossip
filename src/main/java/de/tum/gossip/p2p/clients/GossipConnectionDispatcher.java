@@ -74,7 +74,6 @@ public class GossipConnectionDispatcher extends Thread {
                     resolution = TICKS_BURST_RESOLUTION;
                 }
 
-                // TODO busy waiting if there is empty queue!
                 //noinspection BusyWait
                 sleep(Math.max(0, resolution - (System.currentTimeMillis() - tickMillis)));
             } catch (InterruptedException ignored) {}
