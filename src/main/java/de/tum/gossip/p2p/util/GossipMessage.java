@@ -19,7 +19,7 @@ public class GossipMessage {
     /**
      * Null if the message was sent by us. Otherwise, sent to the session we received the message from.
      */
-    public final AtomicReference<EstablishedSession> receivedFrom; // TODO unused
+    public final AtomicReference<EstablishedSession> receivedFrom;
     /**
      * The set of destinations we sent knowledge packets already (contains `receivedFrom` to easily check for targets).
      */

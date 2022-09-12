@@ -1,6 +1,5 @@
 package de.tum.gossip.p2p.packets;
 
-import com.google.common.base.Preconditions;
 import de.tum.gossip.net.packets.Packet;
 import de.tum.gossip.p2p.protocol.GossipServerHandshakeListener;
 import io.netty.buffer.ByteBuf;
@@ -15,12 +14,8 @@ import io.netty.buffer.ByteBuf;
  * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  * |  VERSION  |            Reserved               |
  * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- * |               Peer Identity                   |
- * |         (SHA256 Hash Of Public Key)           |
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  */
 public class GossipPacketHandshakeHello implements Packet<GossipServerHandshakeListener> {
-    // TODO replace all "who am i"!
     public enum Version {
         VERSION_1,
         ;
@@ -33,40 +28,26 @@ public class GossipPacketHandshakeHello implements Packet<GossipServerHandshakeL
     public Version version; // 1 byte version field
     // 3 bytes reserved (expected to be zero)
 
-    // TODO document: proof of availability of the hostkey!
-    public byte[] serverChallenge; // 8 bytes
-
-    // public PeerIdentity identity; // 32 bytes
-
-    public GossipPacketHandshakeHello() {}
-
-    public GossipPacketHandshakeHello(byte[] serverChallenge) {
-        Preconditions.checkState(serverChallenge.length == 8);
+    public GossipPacketHandshakeHello() {
         this.version = Version.CURRENT;
-        this.serverChallenge = serverChallenge;
     }
 
     @Override
     public void serialize(ByteBuf byteBuf) {
         byteBuf.writeByte(version.ordinal() + 1);
-        byteBuf.writeBytes(new byte[] {0, 0, 0}); // 3 bytes reserved space.
-        byteBuf.writeBytes(serverChallenge);
+        byteBuf.writeBytes(new byte[3]); // 3 bytes reserved space.
     }
 
     @Override
     public void deserialize(ByteBuf byteBuf) {
         byte version = byteBuf.readByte();
         if (version <= 0 || version > Version.values().length) {
-            throw new UnsupportedVersionException(); // TODO catch exception and encode as error!
+            throw new UnsupportedVersionException();
         }
 
         this.version = Version.values()[version - 1];
 
         byteBuf.readBytes(new byte[3]);
-
-        byte[] bytes = new byte[8];
-        byteBuf.readBytes(bytes);
-        serverChallenge = bytes;
     }
 
     @Override

@@ -58,6 +58,7 @@ public class ConnectionInitializer extends ChannelInitializer<Channel> {
     public void initChannel(Channel channel) {
         channel.attr(ChannelInboundHandler.PROTOCOL_DESCRIPTION_KEY).set(protocol);
 
+        var handshakePromise = this.handshakePromise;
         if (handshakePromise == null) {
             handshakePromise = channel.eventLoop().newPromise();
         }

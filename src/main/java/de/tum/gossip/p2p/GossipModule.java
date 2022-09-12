@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import de.tum.gossip.ConfigurationFile;
@@ -12,23 +11,26 @@ import de.tum.gossip.api.APIConnection;
 import de.tum.gossip.api.packets.APIPacketGossipNotification;
 import de.tum.gossip.crypto.GossipCrypto;
 import de.tum.gossip.crypto.HostKey;
+import de.tum.gossip.crypto.PeerIdentity;
 import de.tum.gossip.crypto.SelfSignedCertifyingTrustManager;
 import de.tum.gossip.crypto.certificates.HostKeyCertificate;
 import de.tum.gossip.crypto.certificates.HostKeySelfSignedX509Certificates;
 import de.tum.gossip.net.ProtocolDescription;
-import de.tum.gossip.net.TCPClient;
 import de.tum.gossip.net.TCPServer;
 import de.tum.gossip.net.util.ChannelCloseReason;
+import de.tum.gossip.p2p.clients.GossipClientContext;
+import de.tum.gossip.p2p.clients.GossipConnectionDispatcher;
 import de.tum.gossip.p2p.packets.*;
 import de.tum.gossip.p2p.protocol.EstablishedSession;
 import de.tum.gossip.p2p.protocol.GossipClientHandshakeListener;
 import de.tum.gossip.p2p.protocol.GossipServerHandshakeListener;
+import de.tum.gossip.p2p.storage.PeerIdentityStorage;
+import de.tum.gossip.p2p.storage.StoredIdentity;
 import de.tum.gossip.p2p.util.DataType;
 import de.tum.gossip.p2p.util.GossipMessage;
 import de.tum.gossip.p2p.util.GossipMessageId;
 import de.tum.gossip.p2p.util.MessageNotificationId;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -37,10 +39,11 @@ import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -71,18 +74,19 @@ public class GossipModule {
     public final HostKey hostKey;
     private final TCPServer server;
 
-    /**
-     * All TCPClients >we< created to initiate a GossipEstablishedSession.
-     */
-    private final List<TCPClient> clients;
-    private final Lock clientListLock = new ReentrantLock();
-
     public final PeerIdentityStorage identityStorage;
+    /**
+     * All GossipClientContext >we< created to initiate a GossipEstablishedSession.
+     */
+    private final ConcurrentMap<PeerIdentity, GossipClientContext> clients;
+    private final Lock clientsLock = new ReentrantLock();
+    @Nullable
+    private GossipConnectionDispatcher connectionDispatcher;
 
     /**
      * The maximum amount of sessions we try to maintain.
      */
-    private final int networkDegree;
+    public final int networkDegree;
     /**
      * The list of established sessions with other peers in the network.
      */
@@ -113,19 +117,24 @@ public class GossipModule {
      */
     private final Cache<GossipMessageId, GossipMessage> gossipKnowledgeBase;
 
-
     public GossipModule(ConfigurationFile configuration, EventLoopGroup eventLoopGroup) {
+        this(configuration, eventLoopGroup, new PeerIdentityStorage());
+    }
+
+    public GossipModule(ConfigurationFile configuration, EventLoopGroup eventLoopGroup, PeerIdentityStorage storage) {
         File file = new File(configuration.hostkey());
         Preconditions.checkArgument(file.exists(), "Hostkey located at " + file.getAbsolutePath() + " doesn't exist!");
 
         this.eventLoopGroup = eventLoopGroup;
-        this.identityStorage = new PeerIdentityStorage(); // TODO make path configurable for tests!
+        this.identityStorage = storage;
         this.hostKey = GossipCrypto.readHostKey(file);
         this.server = newServerProtocol().makeServer(configuration.p2p_address(), configuration.p2p_port(), eventLoopGroup, () -> new GossipServerHandshakeListener(this));
 
+        this.connectionDispatcher = new GossipConnectionDispatcher(this);
+
         this.networkDegree = configuration.degree();
 
-        this.clients = Lists.newArrayListWithCapacity(configuration.degree());
+        this.clients = Maps.newConcurrentMap();
         this.sessionList = Sets.newHashSetWithExpectedSize(configuration.degree());
 
         this.messageIdTranslation = Maps.newConcurrentMap();
@@ -142,80 +151,109 @@ public class GossipModule {
                 .build();
     }
 
-    public ChannelFuture run() {
-        return server.bind().addListener(future -> {
-            if (future.isSuccess()) {
-                logger.info("Gossip server listening on {}:{}", server.hostname, server.port);
-            }
-        });
-
-        // TODO start server with a fixed seed of known clients!!!
-        //  connect to known members at random (unavailable reduces the count?, reties, until we reached maximum degree)!
+    public ConcurrentMap<PeerIdentity, GossipClientContext> clients() {
+        return clients;
     }
 
-    public ChannelFuture shutdown() {
-        var handle = server.getHandle();
-        Preconditions.checkNotNull(handle);
+    public ChannelFuture run() {
+        this.identityStorage.loadAll();
 
-        ChannelPromise promise = handle.newPromise();
+        return server.bind().addListener(future -> {
+            if (future.isSuccess()) {
+                bindSuccess();
+            }
+        });
+    }
+
+    private void bindSuccess() {
+        logger.info("Gossip server listening on {}:{}", server.hostname, server.port);
+
+        // call `newClientContext` always acquires a lock. We have a reentrant lock though,
+        // so calling lock multiple times isn't a problem, and this way we avoid acquiring the lock
+        // multiple times!
+        clientsLock.lock();
+        try {
+            for (Entry<PeerIdentity, StoredIdentity> identity: identityStorage) {
+                if (!identity.getValue().hasAddressInformation() || identity.getValue().peerIdentity().equals(hostKey.identity)) {
+                    continue;
+                }
+
+                var peerInfo = new GossipPeerInfo(identity.getKey(), identity.getValue().publicKey());
+
+                // create a client context for every peer we have in our storage!
+                newClientContext(peerInfo, identity.getValue().lastSeenHostname(), identity.getValue().lastSeenPort());
+            }
+
+            Preconditions.checkState(this.connectionDispatcher != null);
+            this.connectionDispatcher = new GossipConnectionDispatcher(this);
+            this.connectionDispatcher.start();
+        } finally {
+            clientsLock.unlock();
+        }
+    }
+
+    public Future<Void> shutdown() {
+        Promise<Void> promise = eventLoopGroup.next().newPromise();
         AtomicInteger integer = new AtomicInteger(0);
         GenericFutureListener<? extends Future<? super Void>> decrement = future -> {
             int result = integer.decrementAndGet();
             if (result <= 0) {
-                promise.setSuccess();
+                promise.setSuccess(null);
             }
         };
 
-        clientListLock.lock();
+        clientsLock.lock();
+        if (this.connectionDispatcher != null) {
+            this.connectionDispatcher.stopDispatcher();
+            this.connectionDispatcher = null;
+        }
+
         try {
             integer.addAndGet(1); // server listener
             integer.addAndGet(clients.size());
 
             server.stop().addListener(decrement);
 
-            for (var client: clients) {
-                client.disconnect().addListener(decrement);
+            for (var entry: clients.entrySet()) {
+                // TODO send a disconnect packet!
+                entry.getValue().disconnect()
+                        .addListener(decrement);
             }
         } finally {
-            clientListLock.unlock();
+            clientsLock.unlock();
         }
 
         return promise;
     }
 
-    public Future<TCPClient> newClientConnection(GossipPeerInfo remotePeerInfo, String hostname, int port) {
-        logger.debug("Trying to connect to new peer at {}:{}", hostname, port);
+    public GossipClientContext newClientContext(GossipPeerInfo remotePeerInfo, String hostname, int port) {
+        clientsLock.lock();
+        var existing = clients.get(remotePeerInfo.identity());
+        if (existing != null) {
+            return existing;
+        }
 
-        var client = newClientProtocol(remotePeerInfo).makeClient(hostname, port, eventLoopGroup, () -> new GossipClientHandshakeListener(this, remotePeerInfo));
+        logger.trace("Creating new client context for {}:{}", hostname, port);
 
-        Promise<TCPClient> clientPromise = eventLoopGroup.next().newPromise();
+        var client = newClientProtocol(remotePeerInfo)
+                .makeClient(hostname, port, eventLoopGroup, () -> new GossipClientHandshakeListener(this, remotePeerInfo));
 
-        client.connect().addListener(future -> {
-            if (future.isCancelled()) {
-                clientPromise.cancel(false);
-            } else if (!future.isSuccess()) {
-                // TODO implement retry logic in outer method!
-                clientPromise.setFailure(future.cause());
-            } else {
-                logger.debug("Successfully connected to new peer at {}:{}", hostname, port);
+        var context = new GossipClientContext(client);
 
-                clientListLock.lock();
-                try {
-                    clients.add(client);
-                } finally {
-                    clientListLock.unlock();
-                }
+        try {
+            clients.put(remotePeerInfo.identity(), context);
+        } finally {
+            clientsLock.unlock();
+        }
 
-                clientPromise.setSuccess(client);
-            }
-        });
-
-        return clientPromise;
+        return context;
     }
 
-    public Optional<ChannelCloseReason> registerEstablishedSession(EstablishedSession session) {
-        sessionListLock.readLock().lock();
+    public Optional<ChannelCloseReason> adoptSession(EstablishedSession session) {
+        sessionListLock.writeLock().lock();
         try {
+            // TODO do ip based rate limiting (= prevents some multiplex sybil attacks => mention that in the paper!)?
+
             if (sessionList.size() >= networkDegree) {
                 return Optional.of(new GossipPacketDisconnect.OutboundCloseReason(
                         GossipPacketDisconnect.Reason.BUSY,
@@ -235,21 +273,15 @@ public class GossipModule {
                         "Disallowed to connect with self identity!"
                 ));
             }
-        } finally {
-            sessionListLock.readLock().unlock();
-        }
 
-        // TODO do ip based rate limiting?
-        sessionListLock.writeLock().lock();
-        try {
             sessionList.add(session);
+
+            if (sessionList.size() >= networkDegree && connectionDispatcher != null) {
+                connectionDispatcher.pause();
+            }
         } finally {
             sessionListLock.writeLock().unlock();
         }
-
-        // TODO log with some session id?: logger.info("Established new peer session with ");
-
-        // TODO shall new connections receive messages we currently still have queued?
 
         return Optional.empty();
     }
@@ -258,6 +290,21 @@ public class GossipModule {
         sessionListLock.writeLock().lock();
         try {
             sessionList.remove(session);
+
+            if (session.isServerBound()) {
+                // the session originated from a remotes client connection.
+                // meaning our local client instance, might be set to 'disabled'. We need to queue it
+                // again for the connection dispatcher!
+                var info = session.peerInfo();
+                var clientContext = clients.get(info.identity());
+                if (clientContext != null) {
+                    clientContext.signalServerBoundSessionDisconnect();
+                }
+            }
+
+            if (sessionList.size() < networkDegree && connectionDispatcher != null) {
+                connectionDispatcher.play();
+            }
         } finally {
             sessionListLock.writeLock().unlock();
         }
@@ -281,7 +328,6 @@ public class GossipModule {
         }
 
         logger.info("[{}] API connected module registered to data type {}!", connection.name(), dataType);
-        // TODO should we send them all the previously valid data?
     }
 
     public void handleDisconnectedAPIClient(APIConnection connection) {
@@ -394,8 +440,6 @@ public class GossipModule {
             if (gossipMessage.shouldForward()) {
                 // we only need the translation if we await for validation!
                 markAwaitingValidation(gossipMessage, notificationId, connections.size());
-
-                // TODO maybe still record all validations (maybe we need to send all data to new incoming API connections?)
             }
 
             var notification = new APIPacketGossipNotification(notificationId, packet.dataType, packet.data);

@@ -18,8 +18,8 @@ import java.util.function.Supplier;
  * Created by Andi on 27.06.22.
  */
 public class TCPClient {
-    private final String hostname;
-    private final int port;
+    public final String hostname;
+    public final int port;
     private final EventLoopGroup eventLoopGroup;
 
     private final ProtocolDescription protocol;
@@ -32,7 +32,7 @@ public class TCPClient {
      * Promise infrastructure provided by the common net layer. An implementation must ensure this promise
      * is marked as succeeded or failed accordingly if API consumers rely on this promise to retrieve connection state.
      */
-    private final Promise<ChannelInboundHandler> handshakePromise;
+    private Promise<ChannelInboundHandler> handshakePromise;
 
     public TCPClient(
             String hostname,
@@ -55,6 +55,13 @@ public class TCPClient {
             throw new RuntimeException("Cannot connect client when in state " + state);
         }
 
+        state = ChannelState.CONNECTING;
+
+        if (this.handshakePromise.isDone()) {
+            // on multiple reconnects we need to create a new handshake promise
+            this.handshakePromise = eventLoopGroup.next().newPromise();
+        }
+
         Bootstrap bootstrap = new Bootstrap();
         bootstrap
                 .group(eventLoopGroup)
@@ -72,18 +79,29 @@ public class TCPClient {
 
                             channel.closeFuture().addListener(this::handleClosed);
                         } else {
-                            state = ChannelState.FREE;
+                            handleClosed(null);
                         }
                     }
                 });
     }
 
-    public Future<de.tum.gossip.net.ChannelInboundHandler> handshakeFuture() {
+    public Future<ChannelInboundHandler> handshakeFuture() {
         return handshakePromise;
     }
 
-    public synchronized ChannelFuture disconnect() {
-        if (state  != ChannelState.CONNECTED) {
+    public ChannelState state() {
+        return state;
+    }
+
+    /**
+     * @return Returns the close future when disconnecting. When not in FREE state, can be cast to {@link ChannelFuture}.
+     */
+    public synchronized Future<Void> disconnect() {
+        if (state == ChannelState.FREE) {
+            return eventLoopGroup.next().newSucceededFuture(null);
+        }
+
+        if (state != ChannelState.CONNECTED) {
             throw new RuntimeException("Cannot disconnect client which is in state " + state);
         }
 
@@ -97,5 +115,14 @@ public class TCPClient {
     private synchronized <F extends Future<? super Void>> void handleClosed(F future) {
         channel = null;
         state = ChannelState.FREE;
+
+        if (future == null || !future.isDone()) {
+            handshakePromise.setFailure(new Exception("Failed to connected or disconnected!"));
+        }
+    }
+
+    @Override
+    public String toString() {
+        return hostname + ":" + port;
     }
 }

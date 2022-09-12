@@ -10,6 +10,7 @@ import de.tum.gossip.net.TCPServer;
 import de.tum.gossip.p2p.GossipModule;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
+import io.netty.util.concurrent.Future;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,7 +41,7 @@ public class GossipAPILayer {
         });
     }
 
-    public ChannelFuture shutdown() {
+    public Future<Void> shutdown() {
         return server.stop();
     }
 }

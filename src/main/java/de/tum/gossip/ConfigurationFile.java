@@ -66,6 +66,7 @@ public record ConfigurationFile(
         Preferences globalNode = preferences.node("global");
         Preferences gossipNode = preferences.node("gossip");
 
+        // TODO relative to the configuration file?
         var hostkey = globalNode.get("hostkey", "");
 
         var cache_size = gossipNode.getInt("cache_size", 50);

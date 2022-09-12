@@ -13,11 +13,14 @@ import io.netty.buffer.ByteBuf;
 public class GossipPacketSpreadKnowledge implements Packet<GossipEstablishedSession> {
     /**
      * Identifier for a routed packet. TODO describe!
+     * <p>
+     * TODO provides means to track, but nothing more than the message hash itself would provide already!
      */
     public GossipMessageId messageId; // 8 bytes
     public int ttl; // 2 bytes
     public DataType dataType; // 2 bytes
-    // TODO introduce reserved header?
+    // There are 4 bytes of reserved within the header for future extensions and alignment reasons. Set to zero on transmission
+
     public byte[] data;
 
     public GossipPacketSpreadKnowledge() {}
@@ -36,6 +39,9 @@ public class GossipPacketSpreadKnowledge implements Packet<GossipEstablishedSess
         byteBuf.writeBytes(messageId.messageId());
         byteBuf.writeShort(ttl);
         byteBuf.writeShort(dataType.dataType());
+        var reserved = new byte[4];
+        byteBuf.writeBytes(reserved);
+
         byteBuf.writeBytes(data);
     }
 
@@ -45,6 +51,8 @@ public class GossipPacketSpreadKnowledge implements Packet<GossipEstablishedSess
         byteBuf.readBytes(messageId.messageId());
         ttl = byteBuf.readUnsignedShort();
         dataType = new DataType(byteBuf.readUnsignedShort());
+        byteBuf.readBytes(new byte[4]); // reading reserved header bytes
+
         data = new byte[byteBuf.readableBytes()];
         byteBuf.readBytes(data);
     }

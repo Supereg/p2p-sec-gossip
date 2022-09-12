@@ -10,6 +10,9 @@ import java.util.function.Supplier;
  * Created by Andi on 21.06.22.
  */
 public interface InboundPacketHandler {
+    /**
+     * This method gives access to the Logger instance of the packet handler.
+     */
     Logger logger();
 
     /**

@@ -7,7 +7,9 @@ import de.tum.gossip.p2p.packets.GossipPacketSpreadKnowledge;
 import de.tum.gossip.p2p.protocol.EstablishedSession;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import org.junit.jupiter.api.Assertions;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -37,6 +39,11 @@ public class MockModuleConnection {
         }
 
         @Override
+        public boolean isServerBound() {
+            return true;
+        }
+
+        @Override
         public <P extends OutboundPacket> void sendPacket(P packet, GenericFutureListener<? extends Future<? super Void>>[] genericFutureListeners) {
             if (!(packet instanceof GossipPacketSpreadKnowledge knowledgePacket)) {
                 throw new RuntimeException("Encountered unexpected packet: " + packet);
@@ -59,8 +66,8 @@ public class MockModuleConnection {
         this.sessionAToB = new Session(moduleB);
         this.sessionBtoA = new Session(moduleA);
 
-        moduleA.registerEstablishedSession(sessionAToB);
-        moduleB.registerEstablishedSession(sessionBtoA);
+        Assertions.assertEquals(moduleA.adoptSession(sessionAToB), Optional.empty());
+        Assertions.assertEquals(moduleB.adoptSession(sessionBtoA), Optional.empty());
     }
 
     public void teardown() {

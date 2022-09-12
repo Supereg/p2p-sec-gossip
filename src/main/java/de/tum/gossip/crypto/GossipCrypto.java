@@ -34,7 +34,7 @@ import java.util.Optional;
  */
 public class GossipCrypto {
     public static final int SHA256_HASH_BYTES_LENGTH = 32;
-    public static final int RSA_SIGNATURE_BYTES_LENGTH = 512;
+    public static final int RSA_SIGNATURE_BYTES_LENGTH = 512; // TODO coule be removed!
     public static final Logger logger = LogManager.getLogger(GossipCrypto.class);
 
     public static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -63,7 +63,7 @@ public class GossipCrypto {
                 keyPair = (PEMKeyPair) parser.readObject();
             } catch (ClassCastException e) { // read unexpected PEM object!
                 logger.error("Failed to parse hostkey", e);
-                throw new RuntimeException(e);
+                throw new RuntimeException("Failed to parse hostkey", e);
             }
 
             if (keyPair == null) {
@@ -78,8 +78,7 @@ public class GossipCrypto {
 
             return new HostKey(publicKey, privateKey);
         } catch (IOException e) {
-            // TODO failed to read file!
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to read hostkey file", e);
         }
     }
 
@@ -122,16 +121,29 @@ public class GossipCrypto {
         try {
             digest = MessageDigest.getInstance("SHA-256", BouncyCastleProvider.PROVIDER_NAME);
         } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-            // TODO something went horribly wrong!
-            throw new RuntimeException(e);
+            throw new RuntimeException(e); // something went horribly wrong!
         }
 
         digest.update(keyBytes);
         return digest.digest();
     }
 
-    public static String formatHex(byte[] hash) {
-        return String.format("%0" + (hash.length*2) + "x", new BigInteger(1, hash));
+    public static byte[] fromHex(String hex) {
+        var result = new BigInteger(hex, 16).toByteArray();
+
+        if ((result.length -1) * 2 == hex.length() && result[0] == 0) {
+            // some super weird behavior of BigInteger.toByteArray where it sometimes? prepends the resulting
+            // array with a zero byte, resulting in a off by one error.
+            var tmp = new byte[result.length - 1];
+            System.arraycopy(result, 1, tmp, 0, tmp.length);
+            result = tmp;
+        }
+
+        return result;
+    }
+
+    public static String formatHex(byte[] bytes) {
+        return String.format("%0" + (bytes.length*2) + "x", new BigInteger(1, bytes));
     }
 
     public static byte[] combineBytes(byte[]... bytesBytes) {
@@ -176,6 +188,7 @@ public class GossipCrypto {
     }
 
     public static class Signature {
+        // TODO removal?
         public static byte[] signChallenge(HostKey hostKey, byte[] challenge) {
             var bytes = GossipCrypto.combineBytes(
                     "HS-CHALLENGE".getBytes(Charsets.UTF_8),
@@ -186,7 +199,6 @@ public class GossipCrypto {
         }
 
         public static boolean verifyChallenge(GossipPeerInfo peerInfo, byte[] signature, byte[] challenge) {
-            // TODO coupling with the gossip module!
             var bytes = GossipCrypto.combineBytes(
                     "HS-CHALLENGE".getBytes(Charsets.UTF_8),
                     challenge,
@@ -200,8 +212,7 @@ public class GossipCrypto {
             try {
                 signer = java.security.Signature.getInstance("SHA512WithRSA", BouncyCastleProvider.PROVIDER_NAME);
             } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-                // TODO sever error case!
-                throw new RuntimeException(e);
+                throw new RuntimeException(e); // something went horribly wrong!
             }
 
             try {
@@ -225,8 +236,7 @@ public class GossipCrypto {
             try {
                 signer = java.security.Signature.getInstance("SHA512WithRSA", BouncyCastleProvider.PROVIDER_NAME);
             } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-                // TODO sever error case!
-                throw new RuntimeException(e);
+                throw new RuntimeException(e); // something went horribly wrong!
             }
 
             try {

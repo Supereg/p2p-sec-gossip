@@ -3,17 +3,16 @@ package de.tum.gossip.p2p.protocol;
 import de.tum.gossip.crypto.GossipCrypto;
 import de.tum.gossip.crypto.PeerCertificateInfo;
 import de.tum.gossip.crypto.PeerIdentity;
-import de.tum.gossip.net.util.ChannelCloseReason;
-import de.tum.gossip.net.util.ChannelCloseReasonCause;
 import de.tum.gossip.net.ChannelInboundHandler;
 import de.tum.gossip.net.ConnectionInitializer;
+import de.tum.gossip.net.util.ChannelCloseReason;
+import de.tum.gossip.net.util.ChannelCloseReasonCause;
 import de.tum.gossip.p2p.GossipModule;
 import de.tum.gossip.p2p.GossipPeerInfo;
-import de.tum.gossip.p2p.packets.GossipHandshakeComplete;
 import de.tum.gossip.p2p.packets.GossipPacketDisconnect;
 import de.tum.gossip.p2p.packets.GossipPacketDisconnect.Reason;
 import de.tum.gossip.p2p.packets.GossipPacketHandshakeHello;
-import de.tum.gossip.p2p.packets.GossipPacketHandshakeIdentityVerification2;
+import de.tum.gossip.p2p.storage.StoredIdentity;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +39,6 @@ public class GossipServerHandshakeListener implements GossipPacketHandler {
 
     // below fields are populated once the handshake proceeds
     private GossipPeerInfo clientPeerInfo; // populated once `GossipPacketHandshakeHello` is received
-    private final byte[] clientChallenge = new byte[8]; // 64 bits for the challenge response
 
     public GossipServerHandshakeListener(GossipModule gossipModule) {
         this.gossipModule = gossipModule;
@@ -79,7 +77,6 @@ public class GossipServerHandshakeListener implements GossipPacketHandler {
 
         this.channel.handshakePromise().setFailure(new ChannelCloseReasonCause(reason));
         this.channel = null;
-        // TODO any notifications to do?
     }
 
     public synchronized void handle(GossipPacketHandshakeHello packet) {
@@ -109,21 +106,20 @@ public class GossipServerHandshakeListener implements GossipPacketHandler {
         PeerIdentity identity = new PeerIdentity(tlsKey);
 
         // public part of the host key of the remote peer's identity.
-        RSAPublicKey publicKey = gossipModule.identityStorage.retrieveKey(identity);
-        if (publicKey == null) {
-            // TODO implement ability to "register", => via trust on first use?
+        StoredIdentity storedIdentity = gossipModule.identityStorage.retrieveKey(identity);
+        if (storedIdentity == null) {
             channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.CANCELLED, "Couldn't find requesting peer's identity in local identity storage!"));
             return;
         }
 
-        if (!Arrays.equals(tlsKey.getEncoded(), publicKey.getEncoded())) { // not really necessary, but still desirable to have contracts explicit!
+        if (!Arrays.equals(tlsKey.getEncoded(), storedIdentity.publicKey().getEncoded())) { // not really necessary, but still desirable to have contracts explicit!
             channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.AUTHENTICATION, "Expected keys to match!"));
             return;
         }
 
         // ensure that the TLS channel was established with a certificate which is associated with the peer's identity!
         try {
-            peerCertificateInfo.hostKeyCertificate().verify(publicKey, BouncyCastleProvider.PROVIDER_NAME);
+            peerCertificateInfo.hostKeyCertificate().verify(storedIdentity.publicKey(), BouncyCastleProvider.PROVIDER_NAME);
         } catch (CertificateException | NoSuchAlgorithmException | InvalidKeyException | NoSuchProviderException e) {
             // unlikely to happen, something went completely wrong!
             channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.UNEXPECTED_FAILURE, e));
@@ -134,18 +130,16 @@ public class GossipServerHandshakeListener implements GossipPacketHandler {
             return;
         }
 
-        clientPeerInfo = new GossipPeerInfo(identity, publicKey);
-
-        var signature = GossipCrypto.Signature.signChallenge(gossipModule.hostKey, packet.serverChallenge);
-        GossipCrypto.SECURE_RANDOM.nextBytes(clientChallenge);
-
-        // TODO channel.sendPacket(new GossipPacketHandshakeIdentityVerification1(signature, clientChallenge));
+        clientPeerInfo = new GossipPeerInfo(identity, storedIdentity.publicKey());
 
         // TODO PoW challenge, if we encounter an unexpected ip address!
-        channel.sendPacket(new GossipHandshakeComplete());
-        switchProtocols();
+
+        // switching protocol state into SESSION
+        var handler = new GossipEstablishedSession(gossipModule, clientPeerInfo, true);
+        channel.replacePacketHandler(handler);
     }
 
+    /*
     public synchronized void handle(GossipPacketHandshakeIdentityVerification2 packet) {
         if (clientPeerInfo == null) {
             channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.CANCELLED, "Received PacketHandshakeIdentityVerification in illegal state!"));
@@ -161,12 +155,7 @@ public class GossipServerHandshakeListener implements GossipPacketHandler {
         channel.sendPacket(new GossipHandshakeComplete());
         switchProtocols();
     }
-
-    private synchronized void switchProtocols() {
-        // switching protocol state into SESSION
-        var handler = new GossipEstablishedSession(gossipModule, clientPeerInfo);
-        channel.replacePacketHandler(handler);
-    }
+     */
 
     @Override
     public synchronized void handle(GossipPacketDisconnect packet) {

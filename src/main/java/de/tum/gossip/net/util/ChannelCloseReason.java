@@ -10,18 +10,18 @@ import java.util.Optional;
  * Created by Andi on 10.09.22.
  */
 public abstract class ChannelCloseReason {
-    public static class Exception extends ChannelCloseReason {
+    public abstract static class LocationCapturing extends ChannelCloseReason {
         public final Throwable cause;
 
-        public Exception(java.lang.Throwable cause) {
+        public LocationCapturing(java.lang.Throwable cause) {
             this.cause = cause;
         }
 
-        public Exception(String message) {
+        public LocationCapturing(String message) {
             this(new java.lang.Exception(message));
         }
 
-        public Exception(String message, Throwable cause) {
+        public LocationCapturing(String message, Throwable cause) {
             this(new java.lang.Exception(message, cause));
         }
 
@@ -36,9 +36,28 @@ public abstract class ChannelCloseReason {
         }
     }
 
-    public static class Timeout extends Exception {
+    public static class Exception extends LocationCapturing {
+        public Exception(Throwable cause) {
+            super(cause);
+        }
+
+        public Exception(String message) {
+            super(message);
+        }
+
+        public Exception(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+    public static class Timeout extends LocationCapturing {
         public Timeout(TimeoutException exception) {
             super(exception);
+        }
+
+        @Override
+        public String getMessage() {
+            return "Netty Timeout Handler";
         }
     }
 
@@ -73,7 +92,11 @@ public abstract class ChannelCloseReason {
 
         if (result.isPresent()) {
             logger.error("[{}] Remote disconnected erroneously: {}", channel.getHandle().remoteAddress(), getMessage());
-            logger.debug("Encountered exception", result.get());
+            if (this instanceof Exception) {
+                logger.debug("Printing exception at handleBeforeClose()", new java.lang.Exception(result.get()));
+            } else {
+                logger.trace("Printing exception at handleBeforeClose()", new java.lang.Exception(result.get()));
+            }
         } else {
             logger.info("[{}] Remote disconnected: {}", channel.getHandle().remoteAddress(), getMessage());
         }

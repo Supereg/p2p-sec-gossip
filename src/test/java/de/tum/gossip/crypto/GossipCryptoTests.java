@@ -1,6 +1,7 @@
 package de.tum.gossip.crypto;
 
 import de.tum.gossip.crypto.certificates.HostKeySelfSignedX509Certificates;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -62,5 +63,24 @@ public class GossipCryptoTests {
 
         // the constructor contains a self test calling verify on itself!
         new HostKeySelfSignedX509Certificates(hostKey);
+    }
+
+    @Test
+    void testHexParsing() {
+        var bytes = new byte[32];
+        GossipCrypto.SECURE_RANDOM.nextBytes(bytes);
+
+        var hexString = GossipCrypto.formatHex(bytes);
+        var output = GossipCrypto.fromHex(hexString);
+        var hexString1 = GossipCrypto.formatHex(output);
+
+        Assertions.assertArrayEquals(bytes, output);
+        Assertions.assertEquals(hexString, hexString1);
+    }
+
+    @Test
+    void testHexParsingString() {
+        var output = GossipCrypto.fromHex("809042e1a693a72e3b4de17968f1faf41a886891eb36528d72f1a38322a4b0b4");
+        assertEquals(32, output.length);
     }
 }

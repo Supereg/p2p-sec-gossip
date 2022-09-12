@@ -18,8 +18,12 @@ public class PeerIdentity {
     }
 
     public PeerIdentity(byte[] bytes) {
-        Preconditions.checkState(bytes.length == SHA256_HASH_BYTES_LENGTH, "Illegal identity length!");
+        Preconditions.checkState(bytes.length == SHA256_HASH_BYTES_LENGTH, "Illegal identity length of " + bytes.length + "!");
         this.bytes = bytes;
+    }
+
+    public PeerIdentity(String hexString) {
+        this(GossipCrypto.fromHex(hexString));
     }
 
     public String hexString() {

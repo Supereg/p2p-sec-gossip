@@ -3,6 +3,8 @@ package de.tum.gossip.p2p;
 import de.tum.gossip.crypto.GossipCrypto;
 import de.tum.gossip.crypto.GossipCryptoTests;
 import de.tum.gossip.crypto.PeerIdentity;
+import de.tum.gossip.p2p.storage.StoredIdentity;
+import de.tum.gossip.p2p.storage.PeerIdentityStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -37,11 +39,11 @@ public class PeerIdentityStorageTests {
         var hostKey = GossipCrypto.readHostKey(GossipCryptoTests.hostKeyFileFromResources());
 
         assertNull(storage.retrieveKey(hostKey.identity));
-        storage.storeKey(hostKey.identity, hostKey.publicKey);
+        storage.storeKey(hostKey.identity, new StoredIdentity(hostKey.publicKey));
 
-        var key = storage.retrieveKey(hostKey.identity);
-        assertNotNull(key);
-        assertEquals(hostKey.publicKey, key);
+        var identity = storage.retrieveKey(hostKey.identity);
+        assertNotNull(identity);
+        assertEquals(hostKey.publicKey, identity.publicKey());
     }
 
     @Test
@@ -52,10 +54,10 @@ public class PeerIdentityStorageTests {
         var hostKey = GossipCrypto.readHostKey(GossipCryptoTests.hostKeyFileFromResources());
 
         assertNull(storage.retrieveKey(hostKey.identity));
-        storage.storeKey(hostKey.identity, hostKey.publicKey);
+        storage.storeKey(hostKey.identity, new StoredIdentity(hostKey.publicKey));
 
-        var key = storage.retrieveKey(hostKey.identity);
-        assertNotNull(key);
-        assertEquals(hostKey.publicKey, key);
+        var identity = storage.retrieveKey(hostKey.identity);
+        assertNotNull(identity);
+        assertEquals(hostKey.publicKey, identity.publicKey());
     }
 }

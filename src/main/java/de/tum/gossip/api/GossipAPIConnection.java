@@ -64,7 +64,7 @@ public class GossipAPIConnection implements GossipAPIPacketHandler, APIConnectio
         try {
             gossipModule.spreadInformation(this, packet.ttl, type, packet.data);
         } catch (GossipException e) {
-            // TODO or terminate API connection?
+            channel.close(new ChannelCloseReason.Message(e.getMessage()));
         }
     }
 
@@ -79,7 +79,6 @@ public class GossipAPIConnection implements GossipAPIPacketHandler, APIConnectio
         try {
             gossipModule.receiveMessageValidation(packet.messageId, packet.valid);
         } catch (GossipException ignored) {
-            // TODO debug at least!
             // fine, ttl ran out or packet was evicted due to other issues (space, invalidity)
         }
     }

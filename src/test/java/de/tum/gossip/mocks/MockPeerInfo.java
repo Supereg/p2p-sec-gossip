@@ -8,7 +8,7 @@ import de.tum.gossip.p2p.GossipPeerInfo;
  */
 public class MockPeerInfo {
     public static GossipPeerInfo generate() {
-        return from(MockHostKey.generate());
+        return from(HostKey.generate());
     }
 
     public static GossipPeerInfo from(HostKey hostKey) {

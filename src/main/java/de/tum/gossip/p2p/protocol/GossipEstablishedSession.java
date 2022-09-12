@@ -9,6 +9,7 @@ import de.tum.gossip.net.ConnectionInitializer;
 import de.tum.gossip.net.packets.OutboundPacket;
 import de.tum.gossip.p2p.GossipModule;
 import de.tum.gossip.p2p.GossipPeerInfo;
+import de.tum.gossip.p2p.packets.GossipHandshakeComplete;
 import de.tum.gossip.p2p.packets.GossipPacketDisconnect;
 import de.tum.gossip.p2p.packets.GossipPacketSpreadKnowledge;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -24,12 +25,17 @@ public class GossipEstablishedSession implements GossipPacketHandler, Establishe
     private final Logger logger = LogManager.getLogger(GossipEstablishedSession.class);
     private final GossipModule module;
     private final GossipPeerInfo remotePeerInfo;
+    /**
+     * If this is {@code ture}, this session was established at the server side by an incoming connection from a remote peer.
+     */
+    private final boolean serverBound;
 
     private ChannelInboundHandler channel;
 
-    public GossipEstablishedSession(GossipModule module, GossipPeerInfo remotePeerInfo) {
+    public GossipEstablishedSession(GossipModule module, GossipPeerInfo remotePeerInfo, boolean serverBound) {
         this.module = module;
         this.remotePeerInfo = remotePeerInfo;
+        this.serverBound = serverBound;
     }
 
     @Override
@@ -53,19 +59,24 @@ public class GossipEstablishedSession implements GossipPacketHandler, Establishe
 
     @Override
     public void onConnect(ChannelInboundHandler channel) {
-        // TODO review timeout of 30 seconds!
-        // TODO send random member list (periodically) => acts as heartbeat!
+        // TODO implement a heartbeat message?
         channel.getHandle().pipeline().addFirst(ConnectionInitializer.Ids.TIMEOUT, new ReadTimeoutHandler(30));
 
         this.channel = channel;
 
-        var result = module.registerEstablishedSession(this);
+        var result = module.adoptSession(this);
         if (result.isPresent()) {
             this.channel.close(result.get());
             return;
         }
 
+        if (serverBound) {
+            // if we are server bound we must send the final handshake complete message!
+            channel.sendPacket(new GossipHandshakeComplete());
+        }
+
         // handshake and session establishment is considered successful from this point onwards
+        logger.info("Completed Handshake with client from {}", channel.getHandle().remoteAddress());
         channel.handshakePromise().setSuccess(channel);
     }
 
@@ -120,5 +131,10 @@ public class GossipEstablishedSession implements GossipPacketHandler, Establishe
 
     public GossipPeerInfo peerInfo() {
         return remotePeerInfo;
+    }
+
+    @Override
+    public boolean isServerBound() {
+        return serverBound;
     }
 }

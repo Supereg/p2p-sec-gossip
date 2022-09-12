@@ -1,6 +1,6 @@
 package de.tum.gossip.p2p.util;
 
-import de.tum.gossip.net.util.Hex;
+import de.tum.gossip.crypto.GossipCrypto;
 
 /**
  * Created by Andi on 07.07.22.
@@ -13,7 +13,7 @@ public record GossipMessageId(byte[] messageId) {
     @Override
     public String toString() {
         return "MessageId{" +
-                Hex.byteArrayToHex(messageId) +
+                GossipCrypto.formatHex(messageId) +
                 '}';
     }
 }

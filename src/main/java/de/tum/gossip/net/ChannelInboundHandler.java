@@ -15,7 +15,6 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Queue;
@@ -40,7 +39,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<InboundPa
 
     private Channel channel;
     private final Promise<ChannelInboundHandler> handshakePromise;
-    private boolean disconnected = false;
+    private volatile boolean disconnected = false;
 
     public ChannelInboundHandler(InboundPacketHandler initialHandler, Promise<ChannelInboundHandler> handshakePromise) {
         this.packetHandler = new AtomicReference<>(initialHandler);
@@ -166,7 +165,7 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<InboundPa
         }
     }
 
-    public void close(ChannelCloseReason reason) {
+    public synchronized void close(ChannelCloseReason reason) {
         var handler = this.packetHandler.get();
 
         if (!this.disconnected) {

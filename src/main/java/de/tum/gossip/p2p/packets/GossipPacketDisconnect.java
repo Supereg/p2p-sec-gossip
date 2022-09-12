@@ -6,6 +6,7 @@ import de.tum.gossip.net.ChannelInboundHandler;
 import de.tum.gossip.net.packets.Packet;
 import de.tum.gossip.p2p.protocol.GossipPacketHandler;
 import io.netty.buffer.ByteBuf;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Optional;
 
@@ -44,13 +45,10 @@ public class GossipPacketDisconnect implements Packet<GossipPacketHandler> {
         public static Optional<Reason> of(ChannelCloseReason reason) {
             if (reason instanceof ChannelCloseReason.Timeout) {
                 return Optional.of(TIMEOUT);
-            } else if (reason instanceof OutboundCloseReason) {
-                // we are sending a disconnect packet outwards, sending the packet is part of the `handleBeforeClose` routine
-                return Optional.empty();
-            } else if (reason instanceof InboundCloseReason) {
-                // we received a packet disconnect, so we just close the channel!
-                return Optional.empty();
-            } else if (reason instanceof ChannelCloseReason.Exception) {
+            } else if (reason instanceof ChannelCloseReason.Exception exception) {
+                if (exception.cause instanceof GossipPacketHandshakeHello.UnsupportedVersionException) {
+                    return Optional.of(UNSUPPORTED);
+                }
                 // any other exceptions based close reasons are considered a failure!
                 return Optional.of(UNEXPECTED_FAILURE);
             } else {
@@ -68,7 +66,11 @@ public class GossipPacketDisconnect implements Packet<GossipPacketHandler> {
         }
     }
 
-    public static class OutboundCloseReason extends ChannelCloseReason.Exception {
+    public interface DisconnectReasonContaining {
+        Reason disconnectReason();
+    }
+
+    public static class OutboundCloseReason extends ChannelCloseReason.LocationCapturing implements DisconnectReasonContaining {
         private final Reason closeReason;
 
         public OutboundCloseReason(Reason reason, String message) {
@@ -87,14 +89,32 @@ public class GossipPacketDisconnect implements Packet<GossipPacketHandler> {
         }
 
         @Override
+        public Reason disconnectReason() {
+            return closeReason;
+        }
+
+        @Override
         public String getMessage() {
             return "Sent close reason " + closeReason + " due to: " + super.getMessage();
         }
+
+        @Override
+        public void handleBeforeClose(ChannelInboundHandler channel, Logger logger) {
+            super.handleBeforeClose(channel, logger);
+            channel.sendPacket(new GossipPacketDisconnect(closeReason));
+        }
     }
 
-    public static class InboundCloseReason extends ChannelCloseReason.Exception {
+    public static class InboundCloseReason extends ChannelCloseReason.LocationCapturing implements DisconnectReasonContaining {
+        private final Reason reason;
         public InboundCloseReason(Reason reason) {
             super("PacketDisconnect with reason " + reason);
+            this.reason = reason;
+        }
+
+        @Override
+        public Reason disconnectReason() {
+            return reason;
         }
     }
 

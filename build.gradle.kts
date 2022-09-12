@@ -24,9 +24,11 @@ dependencies {
     implementation("com.google.guava:guava:31.1-jre")
     // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    implementation("com.google.code.gson:gson:2.9.1")
 
-    // https://mvnrepository.com/artifact/commons-cli/commons-cli
-    implementation("commons-cli:commons-cli:1.5.0")
+    // https://mvnrepository.com/artifact/com.beust/jcommander
+    implementation("com.beust:jcommander:1.82")
     // https://mvnrepository.com/artifact/io.netty/netty-all
     implementation("io.netty:netty-all:4.1.78.Final")
     // https://mvnrepository.com/artifact/org.ini4j/ini4j
@@ -41,7 +43,7 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass.set("de.tum.gossip.App")
+    mainClass.set("de.tum.gossip.CLI")
 }
 
 tasks.named<Test>("test") {

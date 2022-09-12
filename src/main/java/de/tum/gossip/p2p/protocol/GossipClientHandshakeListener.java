@@ -26,10 +26,6 @@ public class GossipClientHandshakeListener implements GossipPacketHandler {
 
     private ChannelInboundHandler channel;
 
-    // private boolean processedChallenge = false;
-    private boolean processedVerificationRequest = false;
-    private final byte[] serverChallenge = new byte[8];
-
     public GossipClientHandshakeListener(GossipModule gossipModule, GossipPeerInfo serverPeerInfo) {
         this.gossipModule = gossipModule;
         this.serverPeerInfo = serverPeerInfo;
@@ -52,8 +48,6 @@ public class GossipClientHandshakeListener implements GossipPacketHandler {
 
         this.channel = channel;
 
-        GossipCrypto.SECURE_RANDOM.nextBytes(serverChallenge);
-
         // we need to wait till the TLS handshake completes.
         // after that we can get access to the TLS certificate to verify that it was signed by the server's identity.
         SslHandler handler = GossipCrypto.getSslHandler(channel);
@@ -62,6 +56,10 @@ public class GossipClientHandshakeListener implements GossipPacketHandler {
     }
 
     private synchronized void onTLSHandshakeComplete(Future<? super Channel> future) {
+        if (this.channel == null || !this.channel.isConnected()) {
+            return;
+        }
+
         if (!future.isSuccess()) {
             this.channel.close(new ChannelCloseReason.Exception("Failed to perform TLS handshake: " + future.cause().getMessage(), future.cause()));
             return;
@@ -70,9 +68,7 @@ public class GossipClientHandshakeListener implements GossipPacketHandler {
         // At this point the full identity was verified through the `SelfSignedCertifyingTrustManager`.
         // We know the servers identity from the start, when we constructed the client.
 
-        // TODO remove challenge!
-        processedVerificationRequest = true; // TODO assuming completion for now!
-        channel.sendPacket(new GossipPacketHandshakeHello(serverChallenge));
+        channel.sendPacket(new GossipPacketHandshakeHello());
     }
 
     @Override
@@ -89,9 +85,9 @@ public class GossipClientHandshakeListener implements GossipPacketHandler {
 
         this.channel.handshakePromise().setFailure(new ChannelCloseReasonCause(reason));
         this.channel = null;
-        // TODO notify about client removal!
     }
 
+    /*
     public synchronized void handle(GossipPacketHandshakeIdentityVerification1 packet) {
         if (processedVerificationRequest) {
             channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.CANCELLED, "Received IdentityVerificationRequest in illegal state!"));
@@ -109,14 +105,17 @@ public class GossipClientHandshakeListener implements GossipPacketHandler {
 
         channel.sendPacket(new GossipPacketHandshakeIdentityVerification2(signature));
     }
+    */
 
     public synchronized void handle(GossipHandshakeComplete packet) {
+        /*
         if (!processedVerificationRequest) {
             channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.CANCELLED, "Received GossipHandshakeComplete in illegal state!"));
             return;
         }
+        */
 
-        var handler = new GossipEstablishedSession(gossipModule, serverPeerInfo);
+        var handler = new GossipEstablishedSession(gossipModule, serverPeerInfo, false);
         channel.replacePacketHandler(handler);
     }
 

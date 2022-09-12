@@ -1,6 +1,6 @@
 package de.tum.gossip.p2p.util;
 
-import de.tum.gossip.net.util.Hex;
+import de.tum.gossip.crypto.GossipCrypto;
 
 import java.nio.ByteBuffer;
 
@@ -19,7 +19,7 @@ public record MessageNotificationId(byte[] messageId) {
     @Override
     public String toString() {
         return "NotificationId{" +
-                Hex.byteArrayToHex(messageId) +
+                GossipCrypto.formatHex(messageId) +
                 '}';
     }
 }

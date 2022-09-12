@@ -47,6 +47,6 @@ public class GossipPacketHandshakeIdentityVerification1 implements Packet<Gossip
 
     @Override
     public void accept(GossipClientHandshakeListener handler) {
-        handler.handle(this);
+        // TODO remove handler.handle(this);
     }
 }

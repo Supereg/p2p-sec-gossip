@@ -24,4 +24,9 @@ public record GossipPeerInfo(
     public int hashCode() {
         return Objects.hash(identity);
     }
+
+    @Override
+    public String toString() {
+        return identity.toString();
+    }
 }

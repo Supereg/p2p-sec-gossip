@@ -70,12 +70,18 @@ public class TCPServer {
                 });
     }
 
-    @Nullable
-    public Channel getHandle() {
-        return channel;
+    public ChannelState state() {
+        return state;
     }
 
-    public synchronized ChannelFuture stop() {
+    /**
+     * @return Returns the Close future when stopping. When not in FREE state, can be cast to {@link ChannelFuture}.
+     */
+    public synchronized Future<Void> stop() {
+        if (state == ChannelState.FREE) {
+            return eventLoopGroup.next().newSucceededFuture(null);
+        }
+
         if (state != ChannelState.CONNECTED) {
             throw new RuntimeException("Cannot stop server which is in state " + state);
         }

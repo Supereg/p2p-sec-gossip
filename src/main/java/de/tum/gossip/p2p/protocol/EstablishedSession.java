@@ -10,4 +10,9 @@ public interface EstablishedSession extends PacketSendable {
     String name();
 
     GossipPeerInfo peerInfo();
+
+    /**
+     * If this is {@code ture}, this session was established at the server side by an incoming connection from a remote peer.
+     */
+    boolean isServerBound();
 }

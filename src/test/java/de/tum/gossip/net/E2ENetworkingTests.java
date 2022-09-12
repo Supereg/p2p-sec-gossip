@@ -141,7 +141,7 @@ public class E2ENetworkingTests {
                 .stop()
                 .sync();
 
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         assertEquals(2, onConnectCalled);
         assertEquals(2, onDisconnectCalled);
