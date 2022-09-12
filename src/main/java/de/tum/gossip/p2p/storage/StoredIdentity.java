@@ -16,10 +16,15 @@ import java.lang.reflect.Type;
 import java.security.interfaces.RSAPublicKey;
 
 /**
+ * Instance of a locally stored gossip peer.
+ *
+ * @param lastSeenHostname - The last known ip address of the peer. Used for address pinning and for establishing a connection.
+ * @param lastSeenPort - The last known port of the peer. Used for establishing a connection.
+ * @param publicKey - The public key of the host key of the peer, serving as the peer's identity.
+ *
  * Created by Andi on 12.09.22.
  */
 public record StoredIdentity(
-        // TODO comment about stored PoW?
         String lastSeenHostname,
         Integer lastSeenPort,
         RSAPublicKey publicKey

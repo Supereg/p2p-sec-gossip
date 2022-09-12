@@ -45,10 +45,10 @@ public class GossipAppTests {
 
         assertEquals(1, app1.gossipModule.clients().size());
         assertEquals(1, app2.gossipModule.clients().size());
+        //noinspection OptionalGetWithoutIsPresent
         var client12 = app1.gossipModule.clients().values().stream().findFirst().get();
-        var client21 = app2.gossipModule.clients().values().stream().findFirst().get(); // TODO warning!
-
-        // TODO assert identity!
+        //noinspection OptionalGetWithoutIsPresent
+        var client21 = app2.gossipModule.clients().values().stream().findFirst().get();
 
         var handshake12 = client12.handshakeFuture();
         var handshake21 = client21.handshakeFuture();
@@ -78,21 +78,16 @@ public class GossipAppTests {
             return;
         }
 
-        // TODO the packet disconnect currently doesn't arrive at the client!
-        if (true) {
-            if (!(cause.channelCloseReason instanceof GossipPacketDisconnect.DisconnectReasonContaining containing)) {
-                fail("channel close reason is not a DisconnectReasonContaining");
-                return;
-            }
-
-            var reason = containing.disconnectReason();
-            assertEquals(reason, GossipPacketDisconnect.Reason.DUPLICATE);
+        if (!(cause.channelCloseReason instanceof GossipPacketDisconnect.DisconnectReasonContaining containing)) {
+            fail("channel close reason is not a DisconnectReasonContaining");
+            return;
         }
+
+        var reason = containing.disconnectReason();
+        assertEquals(reason, GossipPacketDisconnect.Reason.DUPLICATE);
 
         System.out.println("Shutting down!");
         app1.shutdown();
         app2.shutdown();
     }
-
-    // TODO full test?
 }

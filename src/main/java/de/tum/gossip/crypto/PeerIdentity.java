@@ -11,6 +11,7 @@ import static de.tum.gossip.crypto.GossipCrypto.SHA256_HASH_BYTES_LENGTH;
  * Instances of this class capture the identity of a peer.
  */
 public class PeerIdentity {
+    /** SHA-256 hash of the remotes public-key part of the hostkey key-pair */
     private final byte[] bytes;
 
     public PeerIdentity(RSAPublicKey key) {

@@ -7,6 +7,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.function.Supplier;
 
 /**
+ * The required interface for any inbound packet handler. Defined for a {@link InboundPacket}.
+ * <p>
  * Created by Andi on 21.06.22.
  */
 public interface InboundPacketHandler {
@@ -33,6 +35,10 @@ public interface InboundPacketHandler {
      */
     default void onHandlerRemove() {};
 
-    // TODO docs
+    /**
+     * This method is called once the channel is closed.
+     * It is provided with the respective ChannelCloseReason.
+     * @param reason - The ChannelCloseReason passed to the channel `close(...)` method.
+     */
     void onDisconnect(ChannelCloseReason reason);
 }

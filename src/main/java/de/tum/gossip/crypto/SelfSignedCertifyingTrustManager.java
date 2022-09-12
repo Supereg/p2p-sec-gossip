@@ -15,23 +15,11 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 /**
- * A
+ * Trust manager, verifying the integrity of the provided certificates within the TLS handshake.
+ *
  */
 public class SelfSignedCertifyingTrustManager implements X509TrustManager {
     public final GossipPeerInfo expectedIdentity;
-
-    public enum Type {
-        /**
-         * The trust manager is used to verify a certificate chain of length one.
-         * A certificate containing the hostkey certificate.
-         */
-        SINGLE,
-        /**
-         * The trust manager is used to verify a certificate of length two.
-         * An intermediate certificate and a root certificate containing the hostkey.
-         */
-        CHAIN,
-    }
 
     private enum CallOrigin {
         SERVER,

@@ -1,6 +1,9 @@
 package de.tum.gossip.p2p;
 
 /**
+ * Exception raised as part of the public interface of the {@link GossipModule}.
+ * The exception defines predefined error cases.
+ * <p>
  * Created by Andi on 07.09.22.
  */
 public class GossipException extends Exception {

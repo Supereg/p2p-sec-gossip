@@ -20,6 +20,9 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * This class is used to generate the host-key-based certificates used with TLS 1.2.
+ * It is currently not actively used within the project, however still included for reference.
+ * <p>
  * Created by Andi on 06.07.22.
  */
 public class HostKeySelfSignedX509RSACertificate extends HostKeyCertificate {

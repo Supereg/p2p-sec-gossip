@@ -6,6 +6,8 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Objects;
 
 /**
+ * Information capturing the {@link PeerIdentity} and the corresponding {@link RSAPublicKey}.
+ * <p>
  * Created by Andi on 06.07.22.
  */
 public record GossipPeerInfo(

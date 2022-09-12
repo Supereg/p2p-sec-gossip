@@ -15,6 +15,7 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Queue;
@@ -22,6 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 /**
+ * Handle managing the state of an established channel.
+ * <p>
  * Created by Andi on 21.06.22.
  */
 public class ChannelInboundHandler extends SimpleChannelInboundHandler<InboundPacket<?>> {
@@ -46,14 +49,25 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<InboundPa
         this.handshakePromise = handshakePromise;
     }
 
+    /**
+     * @return Returns the underlying Netty Channel handle.
+     */
     public Channel getHandle() {
         return channel;
     }
 
+    /**
+     * A promise infrastructure to provide information about the handshake state of the
+     * underlying protocol. See also {@link TCPClient#handshakeFuture()}.
+     */
     public Promise<ChannelInboundHandler> handshakePromise() {
         return handshakePromise;
     }
 
+    /**
+     * A promise infrastructure to provide information about the handshake state of the
+     * underlying protocol. See also {@link TCPClient#handshakeFuture()}.
+     */
     public Future<ChannelInboundHandler> handshakeFuture() {
         return handshakePromise;
     }
@@ -106,6 +120,15 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<InboundPa
         }
     }
 
+    /**
+     * Replaces the currently employed packet handler to switch to a different protocol state.
+     * <p>
+     * This will result in the {@link InboundPacketHandler#onHandlerRemove()} getting called for the currently
+     * registered packet handler. {@link InboundPacketHandler#onConnect(ChannelInboundHandler)} will be called for
+     * the new packet handler, if the channel is currently connected.
+     * @param handler - The new protocol handler.
+     * @param <Handler> The handler type of the new protocol handler.
+     */
     public <Handler extends InboundPacketHandler> void replacePacketHandler(Handler handler) {
         Preconditions.checkNotNull(handler);
 
@@ -122,11 +145,26 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<InboundPa
         }
     }
 
+    /**
+     * Replaces the currently employed packet handler to switch to a different protocol state.
+     * <p>
+     * This will result in the {@link InboundPacketHandler#onHandlerRemove()} getting called for the currently
+     * registered packet handler. {@link InboundPacketHandler#onConnect(ChannelInboundHandler)} will be called for
+     * the new packet handler, if the channel is currently connected.
+     * @param handlerSupplier - A supplier for the new protocol handler.
+     * @param <Handler> The handler type of the new protocol handler.
+     */
     public <Handler extends InboundPacketHandler> void replacePacketHandler(Supplier<Handler> handlerSupplier) {
         var handler = handlerSupplier.get();
         replacePacketHandler(handler);
     }
 
+    /**
+     * Use this method to send a {@link OutboundPacket} instance to the remote peer. The packet will be queued if the channel
+     * isn't connected at the moment.
+     * @param packet - The packet instance.
+     * @param genericFutureListeners - Future listeners, executed once the packet is sent and flushed.
+     */
     @SafeVarargs
     public final void sendPacket(OutboundPacket packet, GenericFutureListener<? extends Future<? super Void>>... genericFutureListeners) {
         if (!this.isConnected()) {
@@ -165,6 +203,16 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<InboundPa
         }
     }
 
+    /**
+     * Closes the connection to the remote channel with the respective reason.
+     * This method will at first call the {@link ChannelCloseReason#handleBeforeClose(ChannelInboundHandler, Logger)}
+     * routine to execute close reason specific routines (e.g. send out a packet).
+     * After that, {@link InboundPacketHandler#onDisconnect(ChannelCloseReason)} will be called to
+     * inform the current {@link InboundPacket} about the closing channel.
+     * Lastly, the underlying netty channel handle will be closed.
+     *
+     * @param reason - An instance of a {@link ChannelCloseReason}.
+     */
     public synchronized void close(ChannelCloseReason reason) {
         var handler = this.packetHandler.get();
 

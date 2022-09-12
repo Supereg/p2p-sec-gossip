@@ -5,6 +5,11 @@ import de.tum.gossip.crypto.GossipCrypto;
 import java.nio.ByteBuffer;
 
 /**
+ * The identifier to identity pairs of {@link de.tum.gossip.api.packets.APIPacketGossipNotification}
+ * and {@link de.tum.gossip.api.packets.APIPacketGossipValidation}.
+ * The identifier is only used within the API-protocol layer.
+ * Also see {@link GossipMessage}.
+ *
  * @param messageId - 2 Bytes message Id.
  */
 public record MessageNotificationId(byte[] messageId) {

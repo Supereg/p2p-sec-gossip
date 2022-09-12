@@ -7,9 +7,15 @@ import org.apache.logging.log4j.Logger;
 import java.util.Optional;
 
 /**
+ * An arbitrary channel close reason. Instances of this type are supplied when closing an {@link ChannelInboundHandler}.
+ * Also see {@link ChannelInboundHandler#close(ChannelCloseReason)}.
+ * <p>
  * Created by Andi on 10.09.22.
  */
 public abstract class ChannelCloseReason {
+    /**
+     * An abstract {@link ChannelCloseReason} that captures the stack trace where this close reason was created.
+     */
     public abstract static class LocationCapturing extends ChannelCloseReason {
         public final Throwable cause;
 
@@ -36,6 +42,9 @@ public abstract class ChannelCloseReason {
         }
     }
 
+    /**
+     * A {@link ChannelCloseReason} caused by an Exception.
+     */
     public static class Exception extends LocationCapturing {
         public Exception(Throwable cause) {
             super(cause);
@@ -50,6 +59,9 @@ public abstract class ChannelCloseReason {
         }
     }
 
+    /**
+     * A {@link ChannelCloseReason} caused by TimeoutException raised within the channel pipeline,
+     */
     public static class Timeout extends LocationCapturing {
         public Timeout(TimeoutException exception) {
             super(exception);
@@ -61,6 +73,9 @@ public abstract class ChannelCloseReason {
         }
     }
 
+    /**
+     * A generic {@link ChannelCloseReason} representing any kind of close reason in string format.
+     */
     public static class Message extends ChannelCloseReason {
         public final String message;
 
@@ -79,6 +94,9 @@ public abstract class ChannelCloseReason {
         }
     }
 
+    /**
+     * A {@link ChannelCloseReason} that describes that the remote closed the socket.
+     */
     public static class ChannelInactive extends Message {
         public ChannelInactive() {
             super("Channel became inactive!");

@@ -7,6 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * Thread that is responsible for connecting to our remote peers.
+ * <p>
  * Created by Andi on 12.09.22.
  */
 public class GossipConnectionDispatcher extends Thread {

@@ -17,6 +17,8 @@ import java.util.Date;
 import java.util.TimeZone;
 
 /**
+ * An abstract implementation for certificate generation.
+ * <p>
  * Created by Andi on 06.09.22.
  */
 public abstract class HostKeyCertificate {

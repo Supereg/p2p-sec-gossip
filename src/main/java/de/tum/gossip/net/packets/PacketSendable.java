@@ -4,6 +4,8 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 
 /**
+ * Some instances, that is capable of sending packets to the entity it represents.
+ * <p>
  * Created by Andi on 06.09.22.
  */
 public interface PacketSendable {

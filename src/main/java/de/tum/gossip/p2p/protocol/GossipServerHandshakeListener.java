@@ -30,7 +30,6 @@ import java.util.Arrays;
 
 /**
  * Created by Andi on 05.07.22.
- * TODO docs: handshake listener on the server side, handling an incoming client!
  */
 public class GossipServerHandshakeListener implements GossipPacketHandler {
     private final Logger logger = LogManager.getLogger(GossipServerHandshakeListener.class);

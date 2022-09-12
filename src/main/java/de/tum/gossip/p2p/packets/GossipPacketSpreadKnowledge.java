@@ -12,9 +12,7 @@ import io.netty.buffer.ByteBuf;
  */
 public class GossipPacketSpreadKnowledge implements Packet<GossipEstablishedSession> {
     /**
-     * Identifier for a routed packet. TODO describe!
-     * <p>
-     * TODO provides means to track, but nothing more than the message hash itself would provide already!
+     * Random identifier for a routed packet. It is used to avoid cycles in packet routing.
      */
     public GossipMessageId messageId; // 8 bytes
     public int ttl; // 2 bytes

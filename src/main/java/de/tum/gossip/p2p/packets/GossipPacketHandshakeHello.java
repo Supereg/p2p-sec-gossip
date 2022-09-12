@@ -5,15 +5,7 @@ import de.tum.gossip.p2p.protocol.GossipServerHandshakeListener;
 import io.netty.buffer.ByteBuf;
 
 /**
- * Created by Andi on 06.07.22. TODO remove and document!
- *
- * <h3>Packet Format</h3>
- *
- *                                 1  1  1  1  1  1
- *   0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- * |  VERSION  |            Reserved               |
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+ * Created by Andi on 06.07.22.
  */
 public class GossipPacketHandshakeHello implements Packet<GossipServerHandshakeListener> {
     public enum Version {

@@ -20,6 +20,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
+ * The implementation of an API connection.
+ * <p>
  * Created by Andi on 27.06.22.
  */
 public class GossipAPIConnection implements GossipAPIPacketHandler, APIConnection {
@@ -54,8 +56,8 @@ public class GossipAPIConnection implements GossipAPIPacketHandler, APIConnectio
 
     @Override
     public void onDisconnect(ChannelCloseReason reason) {
-        this.channel = null;
         gossipModule.handleDisconnectedAPIClient(this);
+        this.channel = null;
     }
 
     @Override

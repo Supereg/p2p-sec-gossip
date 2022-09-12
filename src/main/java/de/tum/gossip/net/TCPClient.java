@@ -86,10 +86,19 @@ public class TCPClient {
                 });
     }
 
+    /**
+     * Promise infrastructure provided by the common net layer. An implementation must ensure this promise
+     * is marked as succeeded or failed accordingly if API consumers rely on this promise to retrieve connection state.
+     * Use {@link ChannelInboundHandler#handshakePromise()} to get a writeable version of this future and
+     * {@link ChannelInboundHandler#handshakeFuture()} to get the same, read-only version of this future.
+     */
     public Future<ChannelInboundHandler> handshakeFuture() {
         return handshakePromise;
     }
 
+    /**
+     * @return Returns the underlying close future of the netty channel.
+     */
     public ChannelFuture closeFuture() {
         return channel.closeFuture();
     }

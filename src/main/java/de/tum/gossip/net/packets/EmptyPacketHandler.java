@@ -6,6 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * Used e.g. for testing.
+ * <p>
  * Created by Andi on 04.07.22.
  */
 public class EmptyPacketHandler implements InboundPacketHandler {

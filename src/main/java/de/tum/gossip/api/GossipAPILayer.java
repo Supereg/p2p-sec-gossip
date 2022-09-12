@@ -15,6 +15,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * The Gossip socket-layer API interface.
+ * <p>
+ * It manages the connection to all other VoidPhone modules.
+ * <p>
  * Created by Andi on 21.06.22.
  */
 public class GossipAPILayer {

@@ -59,6 +59,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
+ * The implementation of the business logic of the gossip protocol.
+ * <p>
  * Created by Andi on 05.07.22.
  */
 public class GossipModule {
@@ -285,6 +287,12 @@ public class GossipModule {
         return context;
     }
 
+    /**
+     * Called to adopt a newly established session that completed the Gossip handshake.
+     * @param session - The session instance.
+     * @return Optionally returns a {@link ChannelCloseReason} if the established session is to be rejected!
+     *  The optional is empty, if the session is considered adopted.
+     */
     public Optional<ChannelCloseReason> adoptSession(EstablishedSession session) {
         // We impose connect rate limiting based on ip address. This weakens the potential ob Sybill attacks
         // as an attacker cannot run multiple identities on the same ip address.
@@ -330,6 +338,10 @@ public class GossipModule {
         return Optional.empty();
     }
 
+    /**
+     * Called to handle a channel closed of an established session.
+     * @param session - The established session that disconnected.
+     */
     public void handleSessionDisconnect(EstablishedSession session) {
         sessionListLock.writeLock().lock();
         try {
@@ -354,6 +366,11 @@ public class GossipModule {
         }
     }
 
+    /**
+     * Called by an VoidPhone module through the API layer to register notifications for a given data type.
+     * @param connection - The API connection that registered the notification.
+     * @param dataType - The data type to register notifications for.
+     */
     public void registerNotification(APIConnection connection, DataType dataType) {
         // we assume friendly API connections (they are completely unprotected), so we don't impose any
         // rate limiting or whatsoever!
@@ -374,6 +391,10 @@ public class GossipModule {
         logger.info("[{}] API connected module registered to data type {}!", connection.name(), dataType);
     }
 
+    /**
+     * Called to handle a disconnecting client on the API-layer side.
+     * @param connection The api connection that disconnected.
+     */
     public void handleDisconnectedAPIClient(APIConnection connection) {
         registrationLock.writeLock().lock();
         try {
@@ -395,7 +416,14 @@ public class GossipModule {
         logger.info("[{}] API connected module disconnected!", connection.name());
     }
 
-
+    /**
+     * Called by an VoidPhone module through the API layer to announce knowledge into the gossip p2p network.
+     * @param originator - The API connection from which the request originated.
+     * @param ttl - The ttl the knowledge should spread to.
+     * @param dataType - The data type of the contained data.
+     * @param data - The data to spread.
+     * @throws GossipException Thrown if the API connection tries to announce data for a connection it isn't subscribed to.
+     */
     public void spreadInformation(APIConnection originator, int ttl, DataType dataType, byte[] data) throws GossipException {
         GossipMessage gossipMessage;
 
@@ -444,6 +472,12 @@ public class GossipModule {
         spreadDataIntoNetwork(gossipMessage);
     }
 
+    /**
+     * Called to signal an incoming {@link GossipPacketSpreadKnowledge} packet received to one of our gossip peers.
+     * @param session - The established session from which the packet was received.
+     * @param packet - The packet that was received.
+     * @throws GossipException When encountering rate limiting.
+     */
     public void handleIncomingKnowledgeSpread(EstablishedSession session, GossipPacketSpreadKnowledge packet) throws GossipException {
         var rateLimiting = knowledgeSpreadRateLimiting.get(session.peerInfo().identity());
         if (!rateLimiting.isAllowed()) {
@@ -465,7 +499,10 @@ public class GossipModule {
 
         if (didExist.get()) {
             // we already sent it, or we already received this packet!
-            // it is important to ignore anything else, to counter message injection/override attacks
+            // it is important to ignore anything else, to counter message injection/override attacks.
+            // while it is a consideration to accept packets with a higher ttl, we don't do so.
+            // It isn't that realistic, that a packet that traveled a shorter path comes later than the packet
+            // that traveled a more hops.
             return;
         }
 
@@ -498,6 +535,12 @@ public class GossipModule {
         }
     }
 
+    /**
+     * Called by an VoidPhone module through the API layer when receiving a {@link de.tum.gossip.api.packets.APIPacketGossipValidation}.
+     * @param notificationId - The {@link MessageNotificationId} of the gossip notification the client wants to validate.
+     * @param valid - Flag indicating if the provided data was valid.
+     * @throws GossipException Either if we didn't find the notification id or the message.
+     */
     public void receiveMessageValidation(MessageNotificationId notificationId, boolean valid) throws GossipException {
         var messageId = messageIdTranslation.get(notificationId);
         if (messageId == null) {

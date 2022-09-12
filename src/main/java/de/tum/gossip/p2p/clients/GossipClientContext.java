@@ -12,6 +12,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Contextual information of a {@link TCPClient} created by the {@link de.tum.gossip.p2p.GossipModule}.
+ * <p>
  * Created by Andi on 12.09.22.
  */
 public class GossipClientContext {
@@ -28,7 +30,6 @@ public class GossipClientContext {
 
     public GossipClientContext(TCPClient client) {
         this.client = client;
-        // TODO event on channel disconnect!
     }
 
     public Future<Void> connect() {

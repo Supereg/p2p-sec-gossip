@@ -27,7 +27,6 @@ import java.io.FileReader;
  * <h2>Example</h2>
  * An example configuration file looks like the following:
  * <pre>
- * [global]
  * hostkey = ./hostkey.pem
  *
  * [gossip]

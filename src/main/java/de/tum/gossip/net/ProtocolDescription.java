@@ -16,6 +16,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
+ * The description of packets supported by a specific protocol.
+ * <p>
  * Created by Andi on 21.06.22.
  */
 public class ProtocolDescription implements Cloneable {

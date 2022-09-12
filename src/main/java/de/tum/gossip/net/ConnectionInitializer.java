@@ -8,17 +8,24 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.concurrent.Promise;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.nio.ByteOrder;
 import java.util.function.Supplier;
 
 /**
+ * The connection initializer is called to initialize a newly opened channel.
+ * It is used by both the {@link TCPServer} and the {@link TCPClient}.
+ * Note that the {@link TCPServer} uses a single instance for all incoming channels!
+ * So don't store any channel specific state!
+ * <p>
  * Created by Andi on 21.06.22.
  */
 public class ConnectionInitializer extends ChannelInitializer<Channel> {
     private final ProtocolDescription protocol;
     private final Supplier<? extends InboundPacketHandler> defaultHandlerSupplier;
-    private Promise<ChannelInboundHandler> handshakePromise;
+    @Nullable
+    private final Promise<ChannelInboundHandler> handshakePromise;
     private final boolean registerInboundHandler;
 
     public static class Ids {
@@ -35,7 +42,7 @@ public class ConnectionInitializer extends ChannelInitializer<Channel> {
     public <Handler extends InboundPacketHandler> ConnectionInitializer(
             ProtocolDescription protocol,
             Supplier<Handler> defaultHandlerSupplier,
-            Promise<ChannelInboundHandler> handshakePromise
+            @Nullable Promise<ChannelInboundHandler> handshakePromise
     ) {
         this(protocol, defaultHandlerSupplier, handshakePromise, true);
     }
@@ -43,7 +50,7 @@ public class ConnectionInitializer extends ChannelInitializer<Channel> {
     public <Handler extends InboundPacketHandler> ConnectionInitializer(
             ProtocolDescription protocol,
             Supplier<Handler> defaultHandlerSupplier,
-            Promise<ChannelInboundHandler> handshakePromise,
+            @Nullable Promise<ChannelInboundHandler> handshakePromise,
             boolean registerInboundHandler
     ) {
         this.protocol = protocol;

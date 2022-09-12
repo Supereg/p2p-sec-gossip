@@ -27,6 +27,8 @@ import static de.tum.gossip.crypto.GossipCrypto.SHA256_HASH_BYTES_LENGTH;
 import static de.tum.gossip.crypto.GossipCrypto.logger;
 
 /**
+ * Local storage of known identities.
+ * <p>
  * Created by Andi on 06.07.22.
  */
 public class PeerIdentityStorage implements Iterable<Map.Entry<PeerIdentity, StoredIdentity>> {
@@ -152,7 +154,6 @@ public class PeerIdentityStorage implements Iterable<Map.Entry<PeerIdentity, Sto
     @NotNull
     @Override
     public Iterator<Map.Entry<PeerIdentity, StoredIdentity>> iterator() {
-        // TODO users should skip self identity!
         return identityCache.asMap().entrySet().iterator();
     }
 

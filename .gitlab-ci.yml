@@ -17,5 +17,3 @@ build_and_test_job:
   script:
     - ./gradlew assemble
     - ./gradlew test
-
-# TODO linting and code coverage!
