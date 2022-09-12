@@ -28,6 +28,7 @@ public class GossipClientContext {
 
     public GossipClientContext(TCPClient client) {
         this.client = client;
+        // TODO event on channel disconnect!
     }
 
     public Future<Void> connect() {
@@ -51,7 +52,11 @@ public class GossipClientContext {
     }
 
     public synchronized void signalServerBoundSessionDisconnect() {
-        if (nextRetryMillis == -1) {
+        if (state() != ChannelState.FREE) {
+            return;
+        }
+
+        if (nextRetryMillis == -1) { // retry was disabled, re-enable it again!
             calculateNextRetryMillis(10 * MINUTE_MILLIS);
         }
     }
@@ -63,6 +68,7 @@ public class GossipClientContext {
     private synchronized <F extends Future<? super Void>> void handleConnected(F future) {
         if (future.isSuccess()) {
             client.handshakeFuture().addListener(this::handleHandshakeCompleted);
+            client.closeFuture().addListener(future1 -> signalServerBoundSessionDisconnect());
             return;
         }
 

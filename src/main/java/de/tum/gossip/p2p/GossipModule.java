@@ -232,23 +232,30 @@ public class GossipModule {
         };
 
         clientsLock.lock();
-        if (this.connectionDispatcher != null) {
-            this.connectionDispatcher.stopDispatcher();
-            this.connectionDispatcher = null;
-        }
-
+        sessionListLock.writeLock().lock();
         try {
+            if (this.connectionDispatcher != null) {
+                this.connectionDispatcher.stopDispatcher();
+                this.connectionDispatcher = null;
+            }
+
             integer.addAndGet(1); // server listener
             integer.addAndGet(clients.size());
+
+            for (var entry: sessionList) {
+                entry.sendPacket(new GossipPacketDisconnect(GossipPacketDisconnect.Reason.NORMAL));
+                // they get disconnected anyway with the server.stop below!
+            }
+            sessionList.clear();
 
             server.stop().addListener(decrement);
 
             for (var entry: clients.entrySet()) {
-                // TODO send a disconnect packet!
                 entry.getValue().disconnect()
                         .addListener(decrement);
             }
         } finally {
+            sessionListLock.writeLock().unlock();
             clientsLock.unlock();
         }
 

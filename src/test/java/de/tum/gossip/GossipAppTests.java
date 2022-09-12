@@ -79,7 +79,7 @@ public class GossipAppTests {
         }
 
         // TODO the packet disconnect currently doesn't arrive at the client!
-        if (false) {
+        if (true) {
             if (!(cause.channelCloseReason instanceof GossipPacketDisconnect.DisconnectReasonContaining containing)) {
                 fail("channel close reason is not a DisconnectReasonContaining");
                 return;

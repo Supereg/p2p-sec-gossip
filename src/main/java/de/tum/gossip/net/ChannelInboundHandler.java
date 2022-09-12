@@ -169,11 +169,13 @@ public class ChannelInboundHandler extends SimpleChannelInboundHandler<InboundPa
         var handler = this.packetHandler.get();
 
         if (!this.disconnected) {
-            this.disconnected = true;
-
-            handler.logger().trace("Calling disconnect handler due to {}", reason);
+            handler.logger().debug("Calling disconnect handler due to {}", reason);
             reason.handleBeforeClose(this, handler.logger());
             handler.onDisconnect(reason);
+
+            // onDisconnect or the handleBeforeClose might still send packets,
+            // therefore, we can only set `disconnected` after those are called successfully!
+            this.disconnected = true;
         }
 
         if (this.channel.isOpen()) {

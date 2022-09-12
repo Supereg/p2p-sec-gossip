@@ -90,6 +90,10 @@ public class TCPClient {
         return handshakePromise;
     }
 
+    public ChannelFuture closeFuture() {
+        return channel.closeFuture();
+    }
+
     public ChannelState state() {
         return state;
     }

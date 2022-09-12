@@ -47,10 +47,7 @@ public class SpreadInformationTests {
         assertEquals(packet.dataType, TYPE_1);
         assertArrayEquals(packet.data, DATA_1);
 
-
-        // TODO test that ALL connections report valid data!
         assertDoesNotThrow(() -> module.receiveMessageValidation(packet.messageId, true));
-        // TODO test message won't continue to spread if ttl was at 1!
 
         // CLEANUP
         module.handleDisconnectedAPIClient(connection1);
