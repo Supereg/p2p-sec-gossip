@@ -23,7 +23,7 @@ public class CLI {
      */
     public static class IdentityStorageConfiguration {
         @Parameter(names = { "-s", "--storage" }, description = "The location of the identity storage folder. (Default './identities').")
-        public String location;
+        public String location = "./identities";
     }
 
     /**
@@ -115,6 +115,7 @@ public class CLI {
             switch (command) {
                 case "run" -> {
                     var app = new GossipApp(runArgs);
+
                     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown, "App Shutdown Hook"));
                     app.run();
                 }

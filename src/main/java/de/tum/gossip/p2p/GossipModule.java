@@ -550,6 +550,7 @@ public class GossipModule {
         }
 
         if (!valid) {
+            logger.debug("[{}] Message reported invalid with notification id {}!", messageId, notificationId);
             gossipKnowledgeBase.invalidate(messageId);
             return;
         }
@@ -564,6 +565,7 @@ public class GossipModule {
 
         boolean continueSending = gossipMessage.reportValidity();
         if (!continueSending) {
+            logger.debug("[{}] Message reported as valid, but still waiting for other validations!", messageId);
             return; // not all connections did report validity status yet. We continue to wait!
         }
 

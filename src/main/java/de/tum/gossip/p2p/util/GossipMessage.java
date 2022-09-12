@@ -87,7 +87,7 @@ public class GossipMessage {
     }
 
     public boolean reportValidity() {
-        var result = pendingValidations.getAndDecrement();
+        var result = pendingValidations.decrementAndGet();
         return result == 0;
     }
 }

@@ -38,7 +38,7 @@ public class GossipApp {
 
     public GossipApp(ConfigurationFile configuration, PeerIdentityStorage identityStorage) {
         // TODO support EPOLL ELG on linux based machines?
-        this.eventLoopGroup = new NioEventLoopGroup(0, new ThreadFactoryBuilder().setNameFormat("Netty Server IO #%d").setDaemon(true).build());
+        this.eventLoopGroup = new NioEventLoopGroup(0, new ThreadFactoryBuilder().setNameFormat("Netty Server IO #%d").build());
         this.gossipModule = new GossipModule(configuration, eventLoopGroup, identityStorage);
         this.apiLayer = new GossipAPILayer(configuration, eventLoopGroup, gossipModule);
     }

@@ -17,7 +17,7 @@ public class ConfigurationTests {
 
         ConfigurationFile configuration = assertDoesNotThrow(() -> ConfigurationFile.readFromFile(new File(url.toURI())));
 
-        assertEquals("./hostkey.pem", configuration.hostkey());
+        assertTrue(configuration.hostkey().endsWith("./hostkey.pem"));
         assertEquals(40, configuration.cache_size());
         assertEquals(20, configuration.degree());
         assertEquals("131.159.15.62", configuration.p2p_address());

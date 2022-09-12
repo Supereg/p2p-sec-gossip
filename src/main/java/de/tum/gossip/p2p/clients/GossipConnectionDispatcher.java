@@ -54,7 +54,9 @@ public class GossipConnectionDispatcher extends Thread {
             try {
                 if (paused) {
                     // dispatcher might be paused, once we reached maximum node degree!
-                    pauseMonitor.wait();
+                    synchronized (pauseMonitor) {
+                        pauseMonitor.wait();
+                    }
                 }
 
                 tickMillis = System.currentTimeMillis();
@@ -95,7 +97,9 @@ public class GossipConnectionDispatcher extends Thread {
     public void play() {
         if (paused) {
             paused = false;
-            pauseMonitor.notify();
+            synchronized (pauseMonitor) {
+                pauseMonitor.notify();
+            }
         }
     }
 

@@ -112,3 +112,66 @@ Refer to the help menu for an explanation on the required command line parameter
 ### Further utilities
 
 The utility currently also provides a `generateHostKey.sh` script which can be used to easily generate host keys for testing purposes.
+
+
+## Build your own network
+
+This project contains a default setup for a gossip p2p network of size 3.
+Meaning there is a `./identities` PeerIdentityStorage folder with three pre-generated peer identities.
+The respective hostkeys are stored in the `./Documents` folder.
+That folder also contains three different config INI files.
+Two configuring a gossip instance with degree 1 and one configuring a gossip instance with degree 2.
+
+In order to start all peers execute the following commands each in their own terminal:
+```
+gradle run --args='run -c ./Documents/config1.ini'
+gradle run --args='run -c ./Documents/config2.ini'
+gradle run --args='run -c ./Documents/config3.ini'
+```
+After few seconds the network will stabilize and all nodes should be connected to each other.
+
+Now you can use the python-based mock implementations for the gossip clients (the `gossip_client.py` script).
+We execute the following two commands to listen for notifications on instance 2 and 3:
+```
+python3 gossip_client.py -d 127.0.0.1 -p 7003 --notify
+python3 gossip_client.py -d 127.0.0.1 -p 7005 --notify
+```
+
+Now we can connect to instance 1 and send a notification.
+```
+python3 gossip_client.py -d 127.0.0.1 -p 7001 --announce
+```
+
+The other clients should have received the announced data and properly validated it.
+
+### Extending the network
+
+This chapter guides you through all the steps you have to take to extend your test setup with more nodes.
+
+First of all we have to generate a new hostkey to identify our new gossip instance:
+```
+./generateHostKey.sh > ./Documents/hostkeyX.pem
+```
+
+We create a new `configX.ini` and configure the new instance accordingly.
+Most notably, we set the new p2p_address port to 7006 and the api_address port to 7007.
+We may adjust the other configuration parameters.
+
+Now we import the new identity in our shared `./identities` folder.
+Note, for simplicity we don't use a separate .pem file that only contains the hostkeys public key.
+You should do that in production to not expose your private key!
+Also, in this test setup, we use a shared `./identities` folder for simplicity.
+In production, you have to do this import step several times for each distributed peer.
+```
+gradle run --args='import -i ./hostkeyX.pem --address 127.0.0.1 --port 7006'
+```
+Note that we used the port that we defined above in the import command.
+
+Now we can start our new gossip instance as follows:
+```
+gradle run --args='run -c ./Documents/configX.ini'
+```
+
+The other instances must be restarted in order to refresh the list of known identities (more specifically a running instance
+will be able to accept incoming connections from a peer that was placed in the `./identities` folder after application start.
+However, the `GossipConnectionDispatcher` isn't updated and thus the application will never initiate a connection to this peer itself.).

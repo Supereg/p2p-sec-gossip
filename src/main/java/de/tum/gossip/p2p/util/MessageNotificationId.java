@@ -3,6 +3,7 @@ package de.tum.gossip.p2p.util;
 import de.tum.gossip.crypto.GossipCrypto;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * The identifier to identity pairs of {@link de.tum.gossip.api.packets.APIPacketGossipNotification}
@@ -19,6 +20,19 @@ public record MessageNotificationId(byte[] messageId) {
 
     public static MessageNotificationId createEmpty() {
         return new MessageNotificationId(new byte[2]);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MessageNotificationId that = (MessageNotificationId) o;
+        return Arrays.equals(messageId, that.messageId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(messageId);
     }
 
     @Override

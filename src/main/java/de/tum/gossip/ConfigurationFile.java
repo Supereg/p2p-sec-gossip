@@ -14,7 +14,6 @@ import java.io.FileReader;
  * @param hostkey     The hostkey of the peer; it's public-private key pair.
  *                    A 4096-bit RSA key pair store in PEM format.
  *                    The SHA256 hash of the public key serves as the peers `identity`.
- *                    It is located relative to the current working directory.
  * @param cache_size  Maximum number of data items to be held as part of the peer's knowledge base.
  *                    Older items will be removed to ensure space for newer items if the peer's
  *                    knowledge base exceeds this limit.
@@ -84,7 +83,7 @@ public record ConfigurationFile(
         var api_port = Integer.parseInt(api_address_split[1]);
 
         return new ConfigurationFile(
-                hostkey,
+                new File(file.getParentFile().getAbsoluteFile(), hostkey).getAbsolutePath(),
                 cache_size,
                 degree,
                 p2p_address,
