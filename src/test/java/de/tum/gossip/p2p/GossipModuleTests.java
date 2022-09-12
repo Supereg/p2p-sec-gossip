@@ -32,8 +32,8 @@ public class GossipModuleTests {
         var configuration1 = MockConfiguration.generate(hostKey1, hostKeys);
         var configuration2 = MockConfiguration.generate(hostKey2, hostKeys);
 
-        PeerIdentityStorage.unsafeStoreKey(identityStorage, hostKey1.identity, new StoredIdentity(hostKey1.publicKey));
-        PeerIdentityStorage.unsafeStoreKey(identityStorage, hostKey2.identity, new StoredIdentity(hostKey2.publicKey));
+        PeerIdentityStorage.unsafeStoreKey(identityStorage, hostKey1.identity, new StoredIdentity(configuration1.p2p_address(), configuration1.p2p_port(), hostKey1.publicKey));
+        PeerIdentityStorage.unsafeStoreKey(identityStorage, hostKey2.identity, new StoredIdentity(configuration2.p2p_address(), configuration2.p2p_port(), hostKey2.publicKey));
 
         var eventLoop = new NioEventLoopGroup();
         var module1 = new GossipModule(configuration1, eventLoop, new PeerIdentityStorage(identityStorage));

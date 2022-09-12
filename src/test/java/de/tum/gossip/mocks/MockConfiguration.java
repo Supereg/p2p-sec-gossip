@@ -18,9 +18,9 @@ public class MockConfiguration {
                 file.getPath(),
                 50,
                 30,
-                "localhost",
+                "127.0.0.1",
                 ports.getAndIncrement(),
-                "localhost",
+                "127.0.0.1",
                 ports.getAndIncrement()
         );
     }

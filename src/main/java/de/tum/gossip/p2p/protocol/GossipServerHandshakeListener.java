@@ -138,7 +138,10 @@ public class GossipServerHandshakeListener implements GossipPacketHandler {
             // We strictly bind the ip address to the peer's identity.
             // A future version of gossip could employ a PoW based procedure to update the host address at this point,
             // to allow for a more robust implementation.
-            channel.close(new GossipPacketDisconnect.OutboundCloseReason(Reason.AUTHENTICATION, "Unknown host address!"));
+            channel.close(new GossipPacketDisconnect.OutboundCloseReason(
+                    Reason.AUTHENTICATION,
+                    "Unknown host address (" + remoteAddress + " vs. expected " + storedIdentity.lastSeenHostname() + ")!"
+            ));
             return;
         }
 
