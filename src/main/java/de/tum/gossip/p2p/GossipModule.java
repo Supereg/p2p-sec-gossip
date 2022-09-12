@@ -118,7 +118,7 @@ public class GossipModule {
      */
     private final Cache<GossipMessageId, GossipMessage> gossipKnowledgeBase;
 
-    private final LoadingCache<PeerIdentity, RateLimiting> connectRateLimiting;
+    private final LoadingCache<String, RateLimiting> connectRateLimiting;
     private final LoadingCache<PeerIdentity, RateLimiting> knowledgeSpreadRateLimiting;
 
     private class RateLimiting {
@@ -286,9 +286,9 @@ public class GossipModule {
     }
 
     public Optional<ChannelCloseReason> adoptSession(EstablishedSession session) {
-        // by asserting the ip address in the handshake handler, we do a ip address based connect
-        // rate limiting implicitly here!
-        var rateLimiting = connectRateLimiting.get(session.peerInfo().identity());
+        // We impose connect rate limiting based on ip address. This weakens the potential ob Sybill attacks
+        // as an attacker cannot run multiple identities on the same ip address.
+        var rateLimiting = connectRateLimiting.get(session.ipAddress());
         if (!rateLimiting.isAllowed()) {
             return Optional.of(new GossipPacketDisconnect.OutboundCloseReason(
                     GossipPacketDisconnect.Reason.NOT_ALLOWED,

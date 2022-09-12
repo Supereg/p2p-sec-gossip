@@ -39,6 +39,11 @@ public class MockModuleConnection {
         }
 
         @Override
+        public String ipAddress() {
+            return "127.0.0.1";
+        }
+
+        @Override
         public boolean isServerBound() {
             return true;
         }

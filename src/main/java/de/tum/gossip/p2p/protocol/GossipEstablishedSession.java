@@ -18,6 +18,8 @@ import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.net.InetSocketAddress;
+
 /**
  * Created by Andi on 07.07.22.
  */
@@ -132,6 +134,11 @@ public class GossipEstablishedSession implements GossipPacketHandler, Establishe
 
     public GossipPeerInfo peerInfo() {
         return remotePeerInfo;
+    }
+
+    @Override
+    public String ipAddress() {
+        return ((InetSocketAddress) channel.getHandle().remoteAddress()).getAddress().getHostAddress();
     }
 
     @Override
