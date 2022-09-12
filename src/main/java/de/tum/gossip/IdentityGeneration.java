@@ -1,5 +1,6 @@
 package de.tum.gossip;
 
+import de.tum.gossip.crypto.GossipCrypto;
 import de.tum.gossip.crypto.HostKey;
 import de.tum.gossip.p2p.storage.PeerIdentityStorage;
 import de.tum.gossip.p2p.storage.StoredIdentity;
@@ -28,6 +29,7 @@ public class IdentityGeneration {
             var entry = new StoredIdentity(args.defaultExpectedAddress, port, generatedKey.publicKey);
 
             PeerIdentityStorage.unsafeStoreKey(storageFolder, identity, entry);
+            GossipCrypto.writeHostKey(generatedKey, new File(storageFolder, identity.hexString() + ".pem"));
 
             port += 1;
         }
