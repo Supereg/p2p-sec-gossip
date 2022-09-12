@@ -61,8 +61,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class GossipModule {
     private static final ProtocolDescription PROTOCOL = new ProtocolDescription()
             .registerInboundAndOutbound(1, GossipPacketHandshakeHello::new)
-            .registerInboundAndOutbound(2, GossipPacketHandshakeIdentityVerification1::new)
-            .registerInboundAndOutbound(3, GossipPacketHandshakeIdentityVerification2::new)
             .registerInboundAndOutbound(15, GossipHandshakeComplete::new)
             .registerInboundAndOutbound(16, GossipPacketSpreadKnowledge::new)
             .registerInboundAndOutbound(126, GossipPacketDisconnect::new);
