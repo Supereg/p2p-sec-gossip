@@ -9,6 +9,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+
 public class GossipApp {
     public final Logger logger = LogManager.getLogger(GossipApp.class);
 
@@ -17,7 +19,7 @@ public class GossipApp {
     public final GossipAPILayer apiLayer;
 
     public GossipApp(CLI.RunArgs args) throws Exception {
-        this(argsToConfiguration(args));
+        this(argsToConfiguration(args), args.storageConfiguration.location);
     }
 
     private static ConfigurationFile argsToConfiguration(CLI.RunArgs args) throws Exception {
@@ -34,6 +36,10 @@ public class GossipApp {
 
     public GossipApp(ConfigurationFile configuration) {
         this(configuration, new PeerIdentityStorage());
+    }
+
+    public GossipApp(ConfigurationFile configuration, String location) {
+        this(configuration, new PeerIdentityStorage(new File(location)));
     }
 
     public GossipApp(ConfigurationFile configuration, PeerIdentityStorage identityStorage) {
