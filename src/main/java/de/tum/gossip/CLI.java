@@ -92,6 +92,11 @@ public class CLI {
         try {
             try {
                 commander.parse(args);
+
+                if (commander.getParsedCommand() == null) {
+                    // for some reason, the `MissingCommandException` is not thrown if you don't pass any arguments at all!
+                    throw new MissingCommandException("Workaround!");
+                }
             } catch (MissingCommandException exception) {
                 // workaround to provide means to use the "run" subcommand as a default command
                 String[] modifiedArgs = Arrays.copyOf(new String[] { "run" }, 1 + args.length);
