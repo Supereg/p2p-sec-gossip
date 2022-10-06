@@ -53,7 +53,7 @@ public class CLI {
         @Parameter(names = { "--address" }, description = "The remote address expected from all the generated identities (Default: '127.0.0.1').")
         public String defaultExpectedAddress = "127.0.0.1";
 
-        @Parameter(names = { "--start-port" }, description = "The port to use for the identities. Increments by one for every additional identity (Default: 7000).", required = true)
+        @Parameter(names = { "--start-port" }, description = "The port to use for the identities. Increments by one for every additional identity (Default: 7000).")
         public Integer startPort = 7000;
     }
 
