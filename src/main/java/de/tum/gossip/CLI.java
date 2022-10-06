@@ -100,7 +100,7 @@ public class CLI {
             }
         } catch (ParameterException exception) {
             System.err.println("Error: " + exception.getMessage());
-            commander.usage();
+            System.err.println("Invoke `gossip --help` to view the usage page!");
             return;
         }
 
