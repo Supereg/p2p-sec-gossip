@@ -11,7 +11,7 @@ Please install these tools accordingly.
 
 The project can be built by issuing the following command:
 ```
-gradle :classes :testClasses
+gradle :assemble
 ```
 
 ## Testing
@@ -31,11 +31,29 @@ After the execution, code coverage results are available to view when opening th
 
 ## Running
 
+**Running with Gradle:**  
 The program can be run through gradle as well using the following command. Command line
 arguments can be supplied via the optional `--args` argument of the gradle utility:
 ```
 gradle :run --args='...'
 ```
+
+**Running the JAR file:**  
+Alternatively, the program can be run without gradle executing the actual JAR file via two options.
+
+FatJar (added after the submission to ease the grading process of the instructors): You can run the program using 
+a single JAR file (see [UberJar](https://stackoverflow.com/a/11947093) for more info). This was made possible with a
+slight modification to the gradle build configuration. The FatJar/UberJar file is located at `./build/libs/Gossip-10-all.jar`.  
+You can execute the JAR file (after executing the build command) by invoking the JVM: `java -jar ./build/libs/Gossip-10-all.jar`.
+
+By default, gradle assembles the application by having every dependency packaged in its separate (e.g., preserving original code signing) JAR file.
+To execute, gradle provides two script files (Windows and UNIX systems) to run Gossip and load the dependencies
+from the individual dependency JAR files.
+To do this, unpack the ZIP file located at `./build/distributions/Gossip-10.zip` after executing `gradle :assemble`.
+On UNIX based systems, you can now simply run `./build/distributions/Gossip-10/bin/Gossip-10` appending command line
+arguments as usual.
+
+**Command Line Interface:**
 
 When supplying the `--help` command line argument, the program prints the help menu:
 ```
